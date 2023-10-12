@@ -63,3 +63,35 @@ fun calcHour(hour: Int): String {
     }
     return calcHours
 }
+
+# Задача №2. Разная комиссия
+
+fun main() {
+
+    val prevTransition = 400_000.0
+    val currentTransition = 190_000.0
+    val cardType = "Мир"
+
+   val rez=countCommision(cardType, prevTransition, currentTransition)   
+
+        println(rez)
+
+}
+
+
+fun countCommision(cardType: String, prevTransition: Double, currentTransition: Double): Double {
+
+    var minCoast = 35.0
+    val onelimit = 150_000.0
+    val oneLimitVk = 15_000.0
+    val monthlyLimit = 600_000.0
+    val monthLyLimitVk = 40_000.0
+    var result = when (cardType) {
+        "MasterCard", "Maestro" -> if (currentTransition < 75000.0) currentTransition else (currentTransition / 100 * 0.6) + 20.0
+        "Visa", "Мир" -> if ((currentTransition / 100 * 0.75) < minCoast) minCoast else (currentTransition / 100 * 0.75)
+        else -> currentTransition
+    }
+    if (currentTransition > onelimit) result=onelimit
+    if (prevTransition > monthlyLimit) result=monthlyLimit
+    return result
+}
