@@ -83,7 +83,7 @@ fun countCommision(cardType: String, prevTransition: Double, currentTransition: 
 
     val limitMessage = -1.0
     val minCoast = 35.0
-    val onelimit = 150_000.0
+    val oneLimit = 150_000.0
     val oneLimitVk = 15_000.0
     val monthlyLimit = 600_000.0
     val monthLyLimitVk = 40_000.0
@@ -93,7 +93,7 @@ fun countCommision(cardType: String, prevTransition: Double, currentTransition: 
        else -> if (currentTransition > oneLimitVk || prevTransition > monthLyLimitVk) limitMessage else 0.0
         
     }
-    if (currentTransition > onelimit || prevTransition > monthlyLimit) result = limitMessage
+    if (currentTransition > oneLimit || prevTransition > monthlyLimit) result = limitMessage
 
     return result
 }
