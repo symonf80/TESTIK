@@ -80,6 +80,7 @@ fun main() {
 }
 
 fun countCommision(cardType: String, prevTransition: Double, currentTransition: Double): Double {
+
     val limitMessage = -1.0
     val minCoast = 35.0
     val onelimit = 150_000.0
