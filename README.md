@@ -90,8 +90,8 @@ fun countCommision(cardType: String, prevTransition: Double, currentTransition: 
     var result = when (cardType) {
         "MasterCard", "Maestro" -> if (currentTransition < 75000.0) 0.0 else (currentTransition / 100 * 0.6) + 20.0
         "Visa", "Мир" -> if ((currentTransition / 100 * 0.75) < minCoast) minCoast else (currentTransition / 100 * 0.75)
-        "Vk_pay" -> if (currentTransition > oneLimitVk || prevTransition > monthLyLimitVk) limitMessage else 0.0
-        else -> 0.0
+       else -> if (currentTransition > oneLimitVk || prevTransition > monthLyLimitVk) limitMessage else 0.0
+        
     }
     if (currentTransition > onelimit || prevTransition > monthlyLimit) result = limitMessage
 
