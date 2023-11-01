@@ -134,3 +134,56 @@ class MainKtTest {
         assertEquals(-1.0, result)
     }
 }
+
+data class Post(
+
+    val id: Int,
+    val ownerId: Int,
+    val fromId: Int,
+    val date: Int,
+    val text: String,
+    val comments: Comments,
+    val copyright: String,
+    val likes: Likes,
+    val canPin: Boolean,
+    val isFavorite: Boolean
+) {
+
+    data class Comments(
+        val count: Int,
+        val canPost: Boolean,
+        val groupsCanPost: Boolean,
+        val canClose: Boolean,
+        val canOpen: Boolean
+    )
+
+    data class Likes(
+        val count: Int,
+        val userLikes: Boolean,
+        val canLike: Boolean,
+        val canPublish: Boolean
+    )
+}
+
+class WallService {
+
+    private var idUniqu = 1;
+    private var posts = emptyArray<Post>()
+    fun add(post: Post): Post {
+        posts += post
+        return posts.last()
+    }
+
+    fun update(post: Post): Boolean {
+        TODO()
+    }
+
+}
+fun main() {
+
+    val comments = Post.Comments(1, true, true, true, true)
+    val likes = Post.Likes(0, true, true, false)
+    val post = Post(2, 1, 1, 1, "text", comments, "copy", likes, true, true)
+    val wall = WallService()
+    println(wall.add(post))
+}
