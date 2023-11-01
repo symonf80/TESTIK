@@ -167,15 +167,21 @@ data class Post(
 
 class WallService {
 
-    private var idUniqu = 1;
-    private var posts = emptyArray<Post>()
+    private var idUniqu = 2;
+    var posts = emptyArray<Post>()
     fun add(post: Post): Post {
         posts += post
         return posts.last()
     }
 
     fun update(post: Post): Boolean {
-        TODO()
+        for ((index, post) in posts.withIndex()) {
+            if (post.id == idUniqu) {
+                posts[index] = post.copy(id = post.id + 1)
+
+            }
+        }
+        return true
     }
 
 }
@@ -185,5 +191,7 @@ fun main() {
     val likes = Post.Likes(0, true, true, false)
     val post = Post(2, 1, 1, 1, "text", comments, "copy", likes, true, true)
     val wall = WallService()
-    println(wall.add(post))
+    wall.add(post)
+    wall.update(post)
+    println(wall.posts[0])
 }
