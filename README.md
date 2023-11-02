@@ -1,197 +1,111 @@
-plugins {
-
-    id 'org.jetbrains.kotlin.jvm' version '1.8.10'
-    id 'application'
-    id 'jacoco'
-}
-
-group = 'org.example'
-version = '1.0-SNAPSHOT'
-
-repositories {
-
-    mavenCentral()
-}
-
-dependencies {
-
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib'
-    testImplementation'junit:junit:4.13.2'
-
-}
-
-
-
-kotlin {
-
-    jvmToolchain(8)
-}
-
-application {
-
-    mainClassName = 'MainKt'
-}
-
-
-package ru.netology
-
-import org.junit.Assert.*
-import org.junit.Test
-
-
-class MainKtTest {
-
-    @Test
-    
-    fun countCommisionForMaestro() {
-        val prevTransition = 0.0
-        val currentTransition = 70_000.0
-        val cardType = "Maestro"
-
-        val result = countCommision(cardType, prevTransition, currentTransition)
-        assertEquals(0.0, result)
-    }
-    @Test
-    
-    fun countCommisionForMaestroLimit() {
-        val prevTransition = 0.0
-        val currentTransition = 80_000.0
-        val cardType = "Maestro"
-
-        val result = countCommision(cardType, prevTransition, currentTransition)
-        assertEquals(500.0, result)
-    }
-
-    @Test
-    
-    fun countCommisionForVisa() {
-        val prevTransition = 0.0
-        val currentTransition = 80_000.0
-        val cardType = "Visa"
-
-        val result = countCommision(cardType, prevTransition, currentTransition)
-        assertEquals(600.0, result)
-    }
-    @Test
-    fun countCommisionForVisaLimit() {
-        val prevTransition = 0.0
-        val currentTransition = 30.0
-        val cardType = "Visa"
-
-        val result = countCommision(cardType, prevTransition, currentTransition)
-        assertEquals(35.0, result)
-    }
-
-    @Test
-    
-    fun countCommisionForDefolt() {
-        val prevTransition = 0.0
-        val currentTransition = 5_000.0
-        val cardType = "Vk_Pay"
-
-
-        val result = countCommision(cardType, prevTransition, currentTransition)
-        assertEquals(0.0, result)
-    }
-    @Test
-    
-    fun countCommisionForDefoltLimitDay() {
-        val prevTransition = 0.0
-        val currentTransition = 16_000.0
-        val cardType = "Vk_Pay"
-
-
-        val result = countCommision(cardType, prevTransition, currentTransition)
-        assertEquals(-1.0, result)
-    }
-    @Test
-    
-    fun countCommisionForDefoltLimitMonth() {
-        val prevTransition = 41_000.0
-        val currentTransition = 5_000.0
-        val cardType = "Vk_Pay"
-        val result = countCommision(cardType, prevTransition, currentTransition)
-        assertEquals(-1.0, result)
-    }
-    @Test
-    
-    fun countCommisionForOneLimit() {
-        val prevTransition = 0.0
-        val currentTransition = 170_000.0
-        val cardType = "Maestro"
-
-        val result = countCommision(cardType, prevTransition, currentTransition)
-        assertEquals(-1.0, result)
-    }
-    @Test
-    
-    fun countCommisionForMonthlyLimit() {
-        val prevTransition = 700_000.0
-        val currentTransition = 50_000.0
-        val cardType = "Maestro"
-
-        val result = countCommision(cardType, prevTransition, currentTransition)
-        assertEquals(-1.0, result)
-    }
-}
+import java.util.Objects
 
 data class Post(
 
-    val id: Int,
-    val ownerId: Int,
-    val fromId: Int,
-    val date: Int,
-    val text: String,
-    val comments: Comments,
-    val copyright: String,
-    val likes: Likes,
-    val canPin: Boolean,
-    val isFavorite: Boolean
-) {
-
+    val id: Int = 1,
+    val ownerId: Int = 2,
+    val fromId: Int = 3,
+    val date: Int = 4,
+    val text: String = "text",
+    val comments: Comments? = Comments(),
+    val copyright: String = "",
+    val likes: Likes? = Likes(),
+    val canPin: Boolean = true,
+    val isFavorite: Boolean = true
+) 
+{
+   
     data class Comments(
-        val count: Int,
-        val canPost: Boolean,
-        val groupsCanPost: Boolean,
-        val canClose: Boolean,
-        val canOpen: Boolean
+    
+        val count: Int = 1,
+        val canPost: Boolean = true,
+        val groupsCanPost: Boolean = false,
+        val canClose: Boolean = true,
+        val canOpen: Boolean = false
     )
 
     data class Likes(
-        val count: Int,
-        val userLikes: Boolean,
-        val canLike: Boolean,
-        val canPublish: Boolean
+    
+        val count: Int = 1,
+        val userLikes: Boolean = true,
+        val canLike: Boolean = true,
+        val canPublish: Boolean = true
     )
 }
 
+
 class WallService {
 
-    private var idUniqu = 2;
+    private var postId: Int = 1;
     var posts = emptyArray<Post>()
+
     fun add(post: Post): Post {
-        posts += post
+        posts += post.copy(id = postId)
+        postId++
         return posts.last()
     }
 
     fun update(post: Post): Boolean {
-        for ((index, post) in posts.withIndex()) {
-            if (post.id == idUniqu) {
-                posts[index] = post.copy(id = post.id + 1)
-
+        for ((index, item) in posts.withIndex()) {
+            if (item.id == post.id) {
+                posts[index] = post.copy(ownerId = item.ownerId, date = item.date)
+                return true
             }
         }
-        return true
+        return false
     }
-
 }
+
 fun main() {
 
-    val comments = Post.Comments(1, true, true, true, true)
-    val likes = Post.Likes(0, true, true, false)
-    val post = Post(2, 1, 1, 1, "text", comments, "copy", likes, true, true)
+    val post = Post()
     val wall = WallService()
+    val post1 = Post(fromId = 8, text = "55")
     wall.add(post)
-    wall.update(post)
-    println(wall.posts[0])
+    wall.add(post1)
+    println(wall.add(post1))
+
 }
+
+
+import org.junit.Test
+
+import org.junit.Assert.*
+
+class WallServiceTest {
+
+    @Test
+    fun add() {
+        val data = WallService()
+        data.add(Post(0, 2, 3, 4, "test", Post.Comments(), "4", Post.Likes(), true, true))
+        assertNotEquals(0, data)
+    }
+
+    @Test
+    fun updateTrue() {
+        val service = WallService()
+
+        service.add(Post(1, 2, 3, 4, "test", Post.Comments(), "4", Post.Likes(), true, true))
+        service.add(Post(2, 3, 4, 5, "test2", Post.Comments(), "4", Post.Likes(), true, true))
+        service.add(Post(3, 4, 5, 6, "test3", Post.Comments(), "4", Post.Likes(), true, true))
+        val update = Post(3, 2, 3, 4, "test", Post.Comments(), "4", Post.Likes(), true, true)
+        val result = service.update(update)
+        assertTrue(result)
+    }
+
+    @Test
+    fun updateFalse() {
+        val service = WallService()
+        service.add(Post(1, 2, 3, 4, "test", Post.Comments(), "4", Post.Likes(), true, true))
+        service.add(Post(2, 3, 4, 5, "test2", Post.Comments(), "4", Post.Likes(), true, true))
+        service.add(Post(3, 4, 5, 6, "test3", Post.Comments(), "4", Post.Likes(), true, true))
+
+        val update = Post(4, 2, 3, 4, "test", Post.Comments(), "4", Post.Likes(), true, true)
+        val result = service.update(update)
+        assertFalse(result)
+
+    }
+}
+
+
+
