@@ -206,13 +206,14 @@ data class Post(
         val place: Place = Place()
     )
 
-    class Place {
+    data class Place (
+        val someData: Int=1
+    )
 
-    }
-
-    class CopyHistory {
-
-    }
+   data class CopyHistory (
+   
+        val someData: Int=1
+   )
 }
 
 data class PostSource(
@@ -385,6 +386,7 @@ class WallService {
 }
 
 fun main() {
+
     val post = Post()
     val wall = WallService()
     wall.add(post)
