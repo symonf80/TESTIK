@@ -29,13 +29,13 @@ data class Document(
 ) {
 
     data class Preview(
-        val photo: Photo = Photo(),
+        val photo: Array<Photo> = emptyArray(),
         val graffiti: Graffiti = Graffiti(),
         val audioMessage: AudioMessage = AudioMessage(),
     ) {
 
         data class Photo(
-            val sizes: Array<Int> = emptyArray<Int>()
+            val sizes: Int = 1
         )
 
 
