@@ -6,12 +6,12 @@ data class Comment(
     val fromId: Int = 2,
     val date: Int = 3,
     val text: String = "text",
-    val donut: Donut?,
+    val donut: Donut=Donut(),
     val replyToUser: Int = 4,
     val replyToComment: Int = 5,
     val attachments: Array<Attachment>? = emptyArray(),
     val parentsStack: Array<Int>? = emptyArray(),
-    val thread: Thread?
+    val thread: Thread=Thread()
 )
 
 data class Donut(
@@ -433,7 +433,7 @@ fun main() {
     val post = Post()
  
     val wall = WallService()
-    val comment = Comment(donut = null, thread = null)
+    val comment = Comment()
     wall.add(post)
  
     try {
@@ -488,7 +488,7 @@ class WallServiceTest {
           val postId=1
         val service = WallService()
         val post = Post(id = 1)
-        val comment = Comment(donut = null, thread = null)
+        val comment = Comment()
         service.add(post)
         service.createComment(postId,comment)
         assertNotEquals(0,service.comments.size)
@@ -499,7 +499,7 @@ class WallServiceTest {
     fun shouldThrow() {
         val service = WallService()
         val post = Post()
-        val comment = Comment(donut = null, thread = null)
+        val comment = Comment()
         service.add(post)
         service.createComment(2, comment)
     }
