@@ -1,3 +1,5 @@
+class PostNotFoundException (message:String):RuntimeException(message)
+
 data class Comment(
 
     val id: Int = 5,
