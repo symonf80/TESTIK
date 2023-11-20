@@ -1,3 +1,34 @@
+data class Comment(
+
+    val id: Int = 5,
+    val fromId: Int = 2,
+    val date: Int = 3,
+    val text: String = "text",
+    val donut: Donut?,
+    val replyToUser: Int = 4,
+    val replyToComment: Int = 5,
+    val attachments: Array<Attachment>? = emptyArray(),
+    val parentsStack: Array<Int>? = emptyArray(),
+    val thread: Thread?
+)
+
+data class Donut(
+
+    val isDon: Boolean = true,
+    val placeholder: String = "placeholder"
+)
+
+data class Thread(
+
+    val count: Int = 6,
+    val items: Array<Int>? = emptyArray(),
+    val canPost: Boolean = true,
+    val showReplyButton: Boolean = true,
+    val groupsCanPost: Boolean = true
+)
+
+
+
 
 data class Audio(
 
@@ -382,15 +413,33 @@ class WallService {
         return false
     }
 
+ fun createComment(postId: Int, comment: Comment): Comment {
+ 
+        for (post in posts) {
+            if (post.id == postId) {
+                comments += comment
+                return comments.last()
+            }
+        }
 
+        throw PostNotFoundException("Пост не найден")
+    }
 }
 
 fun main() {
 
     val post = Post()
+ 
     val wall = WallService()
+    val comment = Comment(donut = null, thread = null)
     wall.add(post)
-    println(wall.posts.last())
+ 
+    try {
+        wall.createComment(3, comment)
+        println("Коментарий добавлен ")
+    } catch (e: PostNotFoundException) {
+        println(e.message)
+    }
 }
 
 
@@ -429,5 +478,29 @@ class WallServiceTest {
         val result = service.update(update)
         assertFalse(result)
 
+    }
+
+     @Test
+    fun commentAdded() {
+    
+        val postId=1
+        val service = WallService()
+        val post = Post(id = 1)
+        val post1 = Post(id = 2)
+        val comment = Comment(donut = null, thread = null)
+        service.add(post)
+        service.add(post1)
+        service.createComment(postId,comment)
+        assertEquals(post.id, postId)
+    }
+
+    @Test(expected = PostNotFoundException::class)
+    
+    fun shouldThrow() {
+        val service = WallService()
+        val post = Post()
+        val comment = Comment(donut = null, thread = null)
+        service.add(post)
+        service.createComment(2, comment)
     }
 }
