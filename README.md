@@ -485,15 +485,13 @@ class WallServiceTest {
      @Test
     fun commentAdded() {
     
-        val postId=1
+          val postId=1
         val service = WallService()
         val post = Post(id = 1)
-        val post1 = Post(id = 2)
         val comment = Comment(donut = null, thread = null)
         service.add(post)
-        service.add(post1)
         service.createComment(postId,comment)
-        assertEquals(post.id, postId)
+        assertNotEquals(0,service.comments.size)
     }
 
     @Test(expected = PostNotFoundException::class)
