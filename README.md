@@ -1,506 +1,606 @@
-class PostNotFoundException (message:String):RuntimeException(message)
-
 data class Comment(
 
-    val id: Int = 5,
-    val fromId: Int = 2,
+    var noteId: Int =1,
     val date: Int = 3,
-    val text: String = "text",
-    val donut: Donut=Donut(),
-    val replyToUser: Int = 4,
-    val replyToComment: Int = 5,
-    val attachments: Array<Attachment>? = emptyArray(),
-    val parentsStack: Array<Int>? = emptyArray(),
-    val thread: Thread=Thread()
+    var message: String = "text",
+    var isDeleted: Boolean = false
 )
 
-data class Donut(
+class NoteService {
 
-    val isDon: Boolean = true,
-    val placeholder: String = "placeholder"
-)
+    var notes = mutableListOf<Note>()
+    private var noteId: Int = 0
 
-data class Thread(
+    fun add(note: Note) {    
+        if (notes.isEmpty()) {
+            noteId = 1
+        } else {
+            note.id = notes.last().id + 1
+        }
+        notes.add(note)
+    }
 
-    val count: Int = 6,
-    val items: Array<Int>? = emptyArray(),
-    val canPost: Boolean = true,
-    val showReplyButton: Boolean = true,
-    val groupsCanPost: Boolean = true
-)
+    fun createComment(id: Int, comment: Comment) {
+        for (note in notes) {
+            if (id == note.id) {
+                if (note.comments.isEmpty()) {
+                    comment.noteId = 1
+                } else {
+                    comment.noteId = note.comments.last().noteId + 1
+                }
+                note.comments.add(comment)
+            }
+        }
+    }
 
+    fun delete(id: Int) {
+        val iterator = notes.iterator()
+        while (iterator.hasNext()) {
+            if (id == iterator.next().id) {
+                iterator.remove()
+            }
+        }
+    }
 
+    fun deleteComment(noteId: Int, commentId: Int) {
+        for (note in notes) {
+            if (noteId == note.id) {
+                for (comment in note.comments) {
+                    if (comment.noteId == commentId && !comment.isDeleted) {
+                        comment.isDeleted = true
 
+                    }
+                }
+            }
+        }
+    }
 
-data class Audio(
+    fun edit(id: Int, title: String, text: String) {
+        for (note in notes) {
+            if (id == note.id) {
+                note.title = title
+                note.text = text
+            }
+        }
+    }
 
-    val id: Int = 1,
-    val ownerId: Int = 2,
-    val artist: String = "artist",
-    val title: String = "title",
-    val duration: Int = 3,
-    val url: String = "url",
-    val lyricsId: Int = 1,
-    val albumId: Int = 1,
-    val genreId: Int = 1,
-    val date: Int = 1,
-    val noSearch: Boolean = true,
-    val isHd: Boolean = true
-)
+    fun editComment(noteId: Int, commentId: Int, message: String) {
+        for (note in notes) {
+            if (noteId == note.id) {
+                for (comment in note.comments) {
+                    if (comment.noteId == commentId && !comment.isDeleted) {
+                        comment.message = message
+                    }
+                }
+            }
+        }
+    }
 
-data class Document(
+    fun get(): List<Note>? {
+        return notes.ifEmpty {
+            null
+        }
+    }
 
-    val id: Int = 1,
-    val ownerId: Int = 1,
-    val title: String = "title",
-    val size: Int = 1,
-    val ext: String = "ext",
-    val url: String = "url",
-    val date: Int = 1,
-    val type: Int = 1,
-    val preview: Preview = Preview()
-) {
+    fun getById(id: Int): Note? {
+        for (note in notes) {
+            if (id == note.id) {
+                return note
+            }
+        }
+        return null
+    }
 
-    data class Preview(
-        val photo: Array<Photo> = emptyArray(),
-        val graffiti: Graffiti = Graffiti(),
-        val audioMessage: AudioMessage = AudioMessage(),
-    ) {
+    fun getComment(noteId: Int): List<Comment>? {
+        val comments = mutableListOf<Comment>()
+        for (note in notes) {
+            if (note.id == noteId) {
+                for (comment in note.comments) {
+                    if (!comment.isDeleted) {
+                        comments.add(comment)
+                    }
+                }
+                return comments
+            }
+        }
+        return null
+    }
 
-        data class Photo(
-            val sizes: Int = 1
-        )
-
-
-        data class Graffiti(
-            val src: String = "src",
-            val width: Int = 10,
-            val height: Int = 5
-        )
-
-        data class AudioMessage(
-            val duration: Int = 100,
-            val waveform: Array<Int> = emptyArray<Int>(),
-            val linkOgg: String = "linkOgg",
-            val linkMp3: String = "mp3"
-        )
+    fun restoreComment(noteId: Int, commentId: Int) {
+        for (note in notes) {
+            if (noteId == note.id) {
+                for (comment in note.comments) {
+                    if (comment.noteId == commentId && comment.isDeleted) {
+                        comment.isDeleted = false
+                    }
+                }
+            }
+        }
     }
 }
-
-data class Link(
-
-    val url: String = "url",
-    val title: String = "title",
-    val caption: String = "caption",
-    val description: String = "description",
-    val photo: Photo = Photo(),
-    val product: Product = Product(),
-    val button: Button = Button(),
-    val previewPage: String = "previewPage",
-    val previewUrl: String = "previewUrl"
-) {
-
-    data class Product(
-        val price: String = "price"
-    )
-
-    class Button()
-}
-
 data class Note(
 
-    val id: Int = 1,
-    val ownerId: Int = 1,
-    val title: String = "title",
-    val text: String = "text",
+    var id: Int = 1,
+    var title: String = "title",
+    var text: String = "text",
     val date: Int = 1,
-    val comments: Int = 1,
+    val comments: MutableList<Comment> = mutableListOf(),
     val readComments: Int = 1,
     val viewUrl: String = "viewUrl"
 )
 
-data class Page(
-
-    val id: Int = 1,
-    val groupId: Int = 1,
-    val creatorId: Int = 1,
-    val title: String = "title",
-    val currentUserCanEdit: Boolean = true,
-    val currentUserCanEditAccess: Boolean = true,
-    val whoCanView: Int = 1,
-    val whoCanEdit: Int = 1,
-    val edited: Int = 1,
-    val created: Int = 1,
-    val editorId: Int = 1,
-    val views: Int = 1,
-    val parent: String = "parent",
-    val parent2: String = "parent2",
-    val source: String = "source",
-    val html: String = "html",
-    val viewUrl: String = "viewUrl"
-)
-
-data class Photo(
-
-    val id: Int = 1,
-    val albumId: Int = 1,
-    val ownerId: Int = 1,
-    val userId: Int = 1,
-    val text: String = "text",
-    val date: Int = 1,
-    val sizes: Array<Sizes> = emptyArray(),
-    val width: Int = 1,
-    val height: Int = 1
-
-) {
-    data class Sizes(
-    
-        val type: String = "type",
-        val url: String = "url",
-        val width: Int = 100,
-        val height: Int = 100
-    )
-}
-
-data class Poll(
-
-    val id: Int = 1,
-    val ownerId: Int = 1,
-    val created: Int = 1,
-    val question: String = "question",
-    val votes: Int = 1,
-
-    )
-
-
-data class Post(
-
-    val id: Int = 1,
-    val ownerId: Int = 1,
-    val fromId: Int = 1,
-    val createdBy: Int = 1,
-    val date: Int = 1,
-    val text: String? = "text",
-    val replyOwnerId: Int = 1,
-    val replyPostId: Int = 1,
-    val friendsOnly: Boolean = true,
-    val comments: Comments? = Comments(),
-    val copyright: String = "copyright",
-    val likes: Likes? = Likes(),
-    val reposts: Reposts? = Reposts(),
-    val views: Views = Views(),
-    val postType: String = "postType",
-    val postSource: PostSource = PostSource(),
-    val attachments: Array<Attachment> = emptyArray(),
-    val geo: Geo = Geo(),
-    val signerId: Int = 1,
-    val copyHistory: Array<CopyHistory> = emptyArray(),
-    val canPin: Boolean = true,
-    val canDelete: Boolean = true,
-    val canEdit: Boolean = true,
-    val isPinned: Boolean = true,
-    val markedAsAds: Boolean = true,
-    val isFavorite: Boolean = true,
-    val postponedId: Int = 1
-
-) {
-    data class Comments(
-    
-        val count: Int = 10,
-        val canPost: Boolean = true,
-        val groupsCanPost: Boolean = true,
-        val canClose: Boolean = true,
-        val canOpen: Boolean = true
-    )
-
-    data class Likes(
-    
-        val count: Int = 1,
-        val userLikes: Boolean = true,
-        val canLike: Boolean = true,
-        val canPublish: Boolean = true
-    )
-
-    data class Reposts(
-    
-        val count: Int = 2,
-        val userReposted: Boolean = true
-    )
-
-    data class Views(
-        val count: Int = 1
-    )
-
-
-    data class Geo(
-    
-        val type: String = "type",
-        val coordinates: String = "coordinates",
-        val place: Place = Place()
-    )
-
-    data class Place (
-        val someData: Int=1
-    )
-
-   data class CopyHistory (
-   
-        val someData: Int=1
-   )
-}
-
-data class PostSource(
-
-    val type: String = "type",
-    val platform: String = "platform",
-    val data: String = "data",
-    val url: String = "url"
-)
-
-data class Sticker(
-
-    val productId: Int = 1,
-    val stickerId: Int = 1,
-    val images: Array<Images> = emptyArray(),
-    val imagesWithBackground: Array<ImagesWithBackground> = emptyArray(),
-) {
-    data class Images(
-    
-        val url: String = "url",
-        val width: Int = 100,
-        val height: Int = 50
-    )
-
-
-    data class ImagesWithBackground(
-    
-        val url: String = "url",
-        val width: Int = 100,
-        val height: Int = 50
-    )
-
-
-}
-
-data class Video(
-
-    val id: Int = 1,
-    val ownerId: Int = 1,
-    val title: String = "title",
-    val description: String = "description",
-    val duration: String = "long",
-    val photo130: String = "130",
-    val photo320: String = "320",
-    val photo640: String = "640",
-    val photo800: String = "800",
-    val photo1280: String = "1280",
-    val firstFrame130: String = "f130",
-    val firstFrame320: String = "f320",
-    val firstFrame640: String = "f640",
-    val firstFrame800: String = "f800",
-    val firstFrame1280: String = "f1280",
-    val date: Int = 1,
-    val addingDate: Int = 1,
-    val views: Int = 1,
-    val comments: Int = 1,
-    val player: String = "player",
-    val platform: String = "platform",
-    val canEdit: Boolean = true,
-    val canAdd: Boolean = true,
-    val isPrivate: Boolean = true,
-    val accessKey: String = "key",
-    val processing: Boolean = true,
-    val live: Boolean = true,
-    val upcoming: Boolean = true,
-    val isFavorite: Boolean = true
-
-)
-
-
-interface Attachment {
-    val type: String
-}
-
-class AttachmentAudio(val audio: Audio) : Attachment {
-
-    override val type: String = "audio"
-    override fun toString(): String {
-        return "\n $audio"
-    }
-
-}
-
-class AttachmentPhoto(val photo: Photo) : Attachment {
-
-    override val type: String = "photo"
-    override fun toString(): String {
-        return "\n $photo"
-    }
-}
-
-class AttachmentVideo(val video: Video) : Attachment {
-
-    override val type: String = "video"
-    override fun toString(): String {
-        return "\n $video"
-    }
-}
-
-class AttachmentDoc(val doc: Document) : Attachment {
-
-    override val type: String = "doc"
-    override fun toString(): String {
-        return "\n $doc"
-    }
-}
-
-class AttachmentLink(val link: Link) : Attachment {
-
-    override val type: String = "link"
-    override fun toString(): String {
-        return "\n $link"
-    }
-}
-
-class AttachmentNote(val note: Note) : Attachment {
-
-    override val type: String = "note"
-    override fun toString(): String {
-        return "\n $note"
-    }
-}
-
-class AttachmentPoll(val poll: Poll) : Attachment {
-
-    override val type: String = "poll"
-    override fun toString(): String {
-        return "\n $poll"
-    }
-}
-
-class AttachmentPage(val page: Page) : Attachment {
-
-    override val type: String = "page"
-    override fun toString(): String {
-        return "\n $page"
-    }
-}
-
-class AttachmentSticker(val sticker: Sticker) : Attachment {
-
-    override val type: String = "sticker"
-    override fun toString(): String {
-        return "\n $sticker"
-    }
-}
-
-class WallService {
-
-    private var postId: Int = 1;
-    var posts = emptyArray<Post>()
-
-    fun add(post: Post): Post {
-        posts += post.copy(id = postId)
-        postId++
-        return posts.last()
-    }
-
-    fun update(post: Post): Boolean {
-        for ((index, item) in posts.withIndex()) {
-            if (item.id == post.id) {
-                posts[index] = post.copy(ownerId = item.ownerId, date = item.date)
-                return true
-            }
-        }
-        return false
-    }
-
- fun createComment(postId: Int, comment: Comment): Comment {
- 
-        for (post in posts) {
-            if (post.id == postId) {
-                comments += comment
-                return comments.last()
-            }
-        }
-
-        throw PostNotFoundException("Пост не найден")
-    }
-}
-
 fun main() {
 
-    val post = Post()
- 
-    val wall = WallService()
-    val comment = Comment()
-    wall.add(post)
- 
-    try {
-        wall.createComment(3, comment)
-        println("Коментарий добавлен ")
-    } catch (e: PostNotFoundException) {
-        println(e.message)
-    }
+    val service = NoteService()
+    val note = Note()
+    val note1 = Note(id = 2)
+    val com = Comment(message = "new comment")
+    val com1 = Comment(message = "second comment")
+    service.add(note)
+    service.add(note1)
+    service.createComment(1, com)
+    service.createComment(2, com1)
+    println(service.notes[0])
+    println(service.notes[1])
+    
+//    service.deleteComment(1,1)
+
+//    println(service.notes[0])
+
+//    println(service.notes[1])
+
+    service.editComment(2,1,"edit message")
+    println(service.getById(1))
+    println(service.notes[0])
+    println(service.notes[1])
+//    println("\nВывод списка заметок")
+
+//    println(service.get())
+
+//    println("\nВосстановление комментария:")
+
+//    service.restoreComment(1, 1)
+
+//    println(service.notes[0])
+
 }
 
-
+import org.junit.Assert.*
 import org.junit.Test
 
-import org.junit.Assert.*
-
-class WallServiceTest {
+class NoteServiceTest {
 
     @Test
-    fun add() {
-    
-        val data = WallService().add(Post()).id
-        assertNotEquals(0, data)
+    fun addNoteIfListEmpty() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val note = Note(
+            title = "First Note",
+            text = "First Text",
+            comments = mutableListOf(comment)
+        )
+        service.add(note)
+        val result = note.id
+        assertEquals(1, result)
     }
+
     @Test
-    fun updateTrue() {
-    
-        val service = WallService()
-        service.add(Post(1,1,1,1,1,"text",1,1,true,Post.Comments()))
-        service.add(Post(2, 3, 4, 5, 1,"test2",1,1,true, Post.Comments()))
-        service.add(Post(3, 3, 4, 5, 1,"test2",1,1,true, Post.Comments()))
-        val update = Post(3, 3, 4, 5, 1,"test2",1,1,true, Post.Comments())
-        val result = service.update(update)
+    fun addNoteIfListNotEmpty() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val noteFirst = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf(comment)
+        )
+
+        val noteSecond = Note(
+            title = "Second Title",
+            text = "Second Text",
+            comments = mutableListOf(comment)
+        )
+        service.add(noteFirst)
+        service.add(noteSecond)
+        val result = noteSecond.id
+        assertEquals(2, result)
+    }
+
+    @Test
+    fun deleteNoteWithExistId() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf(comment)
+        )
+        service.add(note)
+        service.delete(1)
+        val result = service.notes.size
+        assertEquals(0, result)
+    }
+
+    @Test
+    fun deleteNoteWithNotExistId() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf(comment)
+        )
+        service.add(note)
+        service.delete(2)
+        val result = service.notes.size
+        assertEquals(1, result)
+    }
+
+    @Test
+    fun editNoteWithExistId() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val title = "First Title"
+        val text = "First Text"
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf(comment)
+        )
+        service.add(note)
+        service.edit(1, title, text)
+        val resultTitle = note.title
+        val resultText = note.text
+        assertEquals(title, resultTitle)
+        assertEquals(text, resultText)
+    }
+
+    @Test
+    fun editNoteWithNotExistId() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val title = "First Title"
+        val text = "First Text"
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf(comment)
+        )
+        service.add(note)
+        service.edit(2, title, text)
+        val resultTitle = note.title
+        val resultText = note.text
+        assertEquals("First Title", resultTitle)
+        assertEquals("First Text", resultText)
+    }
+
+    @Test
+    fun getAllNotes() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val noteFirst = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf(comment)
+        )
+
+        val noteSecond = Note(
+            title = "Second Title",
+            text = "Second Text",
+            comments = mutableListOf(comment)
+        )
+
+        val noteThird = Note(
+            title = "Third Title",
+            text = "Third Text",
+            comments = mutableListOf(comment)
+        )
+        service.add(noteFirst)
+        service.add(noteSecond)
+        service.add(noteThird)
+        val result = service.get()?.size
+        assertEquals(3, result)
+    }
+
+    @Test
+    fun getNoteIfExistId() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val noteFirst = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf(comment)
+        )
+
+        val noteSecond = Note(
+            title = "Second Title",
+            text = "Second Text",
+            comments = mutableListOf(comment)
+        )
+        service.add(noteFirst)
+        service.add(noteSecond)
+        val result = service.getById(2)
+        assertEquals(2, result?.id)
+    }
+
+    @Test
+    fun getNoteIfNotExistId() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val noteFirst = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf(comment)
+        )
+
+        val noteSecond = Note(
+            title = "Second Title",
+            text = "Second Text",
+            comments = mutableListOf(comment)
+        )
+        service.add(noteFirst)
+        service.add(noteSecond)
+        val result = service.getById(3)
+        assertEquals(null, result?.id)
+    }
+
+    @Test
+    fun addCommentIfCommentsListIsEmpty() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, comment)
+        val result = note.comments.size
+        assertEquals(1, result)
+    }
+
+    @Test
+    fun addCommentIfCommentsListIsNotEmpty() {
+        val service = NoteService()
+        val commentFirst = Comment(message = "First Comment")
+        val commentSecond = Comment(message = "Second Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+
+        service.add(note)
+        service.createComment(1, commentFirst)
+        service.createComment(1, commentSecond)
+        val result = commentSecond.noteId
+        assertEquals(2, result)
+    }
+
+    @Test
+    fun addCommentNotValidNote() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(2312, comment)
+        val result = note.comments.size
+        assertEquals(0, result)
+    }
+
+    @Test
+    fun deleteComment() {
+        val service = NoteService()
+        val commentFirst = Comment(message = "First Comment")
+        val commentSecond = Comment(message = "Second Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, commentFirst)
+        service.createComment(1, commentSecond)
+        service.deleteComment(1, 1)
+        val result = commentFirst.isDeleted
         assertTrue(result)
     }
 
     @Test
-    fun updateFalse() {
-    
-        val service = WallService()
-        service.add(Post(1,1,1,1,1,"text",1,1,true,Post.Comments()))
-        service.add(Post(2, 3, 4, 5, 1,"test2",1,1,true, Post.Comments()))
-        service.add(Post(3, 3, 4, 5, 1,"test2",1,1,true, Post.Comments()))
-        val update = Post(5,1,1,1,1,"text",1,1,true,Post.Comments())
-        val result = service.update(update)
-        assertFalse(result)
-
+    fun deleteCommentIfNotExistNote() {
+        val service = NoteService()
+        val commentFirst = Comment(message = "First Comment")
+        val commentSecond = Comment(message = "Second Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, commentFirst)
+        service.createComment(1, commentSecond)
+        service.deleteComment(2, 1)
+        val result = note.comments.size
+        assertEquals(2, result)
     }
 
-     @Test
-    fun commentAdded() {
-    
-          val postId=1
-        val service = WallService()
-        val post = Post(id = 1)
-        val comment = Comment()
-        service.add(post)
-        service.createComment(postId,comment)
-        assertNotEquals(0,service.comments.size)
+    @Test
+    fun deleteDeletedComment() {
+        val service = NoteService()
+        val commentFirst = Comment(message = "First Comment", isDeleted = true)
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, commentFirst)
+        service.deleteComment(1, 1)
+        val resultFirst = note.comments.size
+        val resultSecond = commentFirst.isDeleted
+        assertEquals(1, resultFirst)
+        assertEquals(true, resultSecond)
     }
 
-    @Test(expected = PostNotFoundException::class)
-    
-    fun shouldThrow() {
-        val service = WallService()
-        val post = Post()
-        val comment = Comment()
-        service.add(post)
-        service.createComment(2, comment)
+    @Test
+    fun restoreComment() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, comment)
+        service.deleteComment(1, 1)
+        service.restoreComment(1, 1)
+        val resultFirst = comment.isDeleted
+        val resultSecond = note.comments.size
+        assertFalse(resultFirst)
+        assertEquals(1, resultSecond)
+    }
+
+    @Test
+    fun restoreCommentIfNotExistNote() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, comment)
+        service.deleteComment(1, 1)
+        service.restoreComment(2, 1)
+        val resultFirst = comment.isDeleted
+        val resultSecond = note.comments.size
+        assertTrue(resultFirst)
+        assertEquals(1, resultSecond)
+    }
+
+    @Test
+    fun restoreNotValidComment() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment", isDeleted = false)
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, comment)
+        service.restoreComment(1, 2)
+        val result = note.comments.size
+        assertEquals(1, result)
+    }
+
+    @Test
+    fun get() {
+        val service = NoteService()
+        val commentFirst = Comment(message = "First Comment")
+        val commentSecond = Comment(message = "Second Comment")
+        val commentThird = Comment(message = "Third Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, commentFirst)
+        service.createComment(1, commentSecond)
+        service.createComment(1, commentThird)
+        val result = service.getComment(1)?.size
+        assertEquals(3, result)
+    }
+
+    @Test
+    fun getCommentsNotExistNote() {
+        val service = NoteService()
+        val commentFirst = Comment(message = "First Comment")
+        val commentSecond = Comment(message = "Second Comment")
+        val commentThird = Comment(message = "Third Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, commentFirst)
+        service.createComment(1, commentSecond)
+        service.createComment(1, commentThird)
+        val result = service.getComment(2)?.size
+        assertEquals(null, result)
+    }
+
+    @Test
+    fun editComment() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, comment)
+        service.editComment(1, 1, "New Text")
+        val result = comment.message
+        assertEquals("New Text", result)
+    }
+
+    @Test
+    fun editCommentIfNotExistNote() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment")
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, comment)
+        service.editComment(2, 1, "New Text")
+        val result = comment.message
+        assertEquals("First Comment", result)
+    }
+
+    @Test
+    fun editDeletedComment() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment", isDeleted = true)
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, comment)
+        service.editComment(1, 1, "New Text")
+        val result = comment.message
+        assertEquals("First Comment", result)
+    }
+
+    @Test
+    fun editNotValidComment() {
+        val service = NoteService()
+        val comment = Comment(message = "First Comment", isDeleted = false)
+        val note = Note(
+            title = "First Title",
+            text = "First Text",
+            comments = mutableListOf()
+        )
+        service.add(note)
+        service.createComment(1, comment)
+        service.editComment(1, 2, "New Text")
+        val result = comment.message
+        assertEquals("First Comment", result)
     }
 }
+
+
+
