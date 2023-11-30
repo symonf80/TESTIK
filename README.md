@@ -133,9 +133,9 @@ class ChatServiceTest {
     }
     @Test
     fun getLastChatsNotRead() {
-        service.addMessage(1, Message())
-        val result = service.getLastChatsNotRead().size
-        assertEquals(1, result)
+         service.addMessage(1, Message(read = true))
+        val result = service.getLastChatsNotRead().joinToString ()
+        assertEquals("нет непрочитанных сообщений", result)
     }
     @Test(expected = ChatNotFoundException::class)
     fun getMessagesException() {
