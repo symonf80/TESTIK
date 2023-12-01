@@ -13,7 +13,7 @@ class ChatService {
     fun deleteChat(id: Int) {
         val chat = chats[id] ?: throw ChatNotFoundException("Чатов нет")
         chat.messages.removeAll { _ -> true }
-        chat.messages += Message("Данный чат удален", false, true)
+        chat.messages += Message("Данный чат удален", delete = true)
         chats[id] = chat
     }
 
