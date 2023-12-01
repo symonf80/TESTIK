@@ -131,6 +131,14 @@ class ChatServiceTest {
         val result = service.getLastMessages().size
         assertEquals(1, result)
     }
+
+     @Test
+    fun getLastMessagesIfDelete() {
+        service.addMessage(1, Message())
+        service.deleteMessage(1,1)
+        val result = service.getLastMessages().joinToString ()
+        assertEquals("Нет сообщений", result)
+    }
     @Test
     fun getLastChatsNotRead() {
          service.addMessage(1, Message(read = true))
