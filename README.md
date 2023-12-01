@@ -27,8 +27,9 @@ class ChatService {
         return chats.values.map { chat -> chat.messages.lastOrNull { !it.delete }?.text ?: alert }
     }
 
-    fun getLastChatsNotRead() =
-        chats.values.map { chat: Chat -> chat.messages.lastOrNull { !it.read }?.text ?: "нет непрочитанных сообщений" }
+    fun getChatsNotRead(): List<String> {
+        return chats.values.map { chat -> chat.messages.lastOrNull { !it.read }?.text ?: "нет непрочитанных сообщений" }
+    }
 
     fun getMessages(id: Int, count: Int): List<Message> {
         val chat = chats[id] ?: throw ChatNotFoundException(alert)
