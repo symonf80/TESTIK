@@ -63,7 +63,9 @@ fun main() {
     service.addMessage(2, message2)
     service.addMessage(3, message2)
     service.deleteMessage(1, 1)
-    println(service.getLastMessages())
+    for (i in service.chats){
+        println(i)
+    }
 }
 
 
