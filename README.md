@@ -13,10 +13,10 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginBottom="16dp"
+        android:importantForAccessibility="no"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars"
-        android:importantForAccessibility="no" />
+        tools:srcCompat="@tools:sample/avatars" />
 
     <TextView
         android:id="@+id/textView"
@@ -50,18 +50,21 @@
         app:constraint_referenced_ids="avatar,textView2" />
 
     <TextView
+        android:id="@+id/text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="555"
-        app:layout_constraintTop_toBottomOf="@id/barrier" />
+        android:layout_marginTop="16dp"
+        android:lineSpacingExtra="8dp"
+        app:layout_constraintTop_toBottomOf="@id/barrier"
+        tools:text="@string/text" />
 
     <ImageButton
         android:id="@+id/menu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
+        android:importantForAccessibility="no"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/avatar"
-        app:srcCompat="@drawable/menu"
-        android:importantForAccessibility="no" />
+        app:srcCompat="@drawable/menu" />
 </androidx.constraintlayout.widget.ConstraintLayout>
