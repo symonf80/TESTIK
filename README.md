@@ -12,11 +12,10 @@
         android:id="@+id/avatar"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginBottom="16dp"
-        android:importantForAccessibility="no"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
+        tools:srcCompat="@sample/post_avatars" />
 
     <TextView
         android:id="@+id/textView"
@@ -54,6 +53,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:autoLink="web|all"
         android:lineSpacingExtra="8dp"
         app:layout_constraintTop_toBottomOf="@id/barrier"
         tools:text="@string/text" />
@@ -76,3 +76,13 @@
         app:barrierMargin="16dp"
         app:constraint_referenced_ids="text" />
 </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+<resources>    
+    <string name="app_name">MyHomeWork</string>
+    <string name="text">Привет,это новая Нетология!Когда-то Нетология начиналась с интенсивов по онлайн-маркетингу.
+        Затем появились курсы по дизайну,разработке,аналитике и управлению.Мы растём сами и помогаем расти студентам: от новичков до уверенных профессионалов.
+    Но самое важное остаётся с нами: мы верим,что в каждом уже есть сила,которая заставляет хотеть больше,целиться выше,бежать быстрее.
+    Наша миссия-помочь встать на путь роста и начать цепочку перемен- http//netolo.gy/fyb</string>
+</resources>
