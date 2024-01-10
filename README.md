@@ -1,165 +1,69 @@
-class ChatService {
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout 
+xmlns:android="http://schemas.android.com/apk/res/android"
 
-    var chats = mutableMapOf<Int, Chat>()
-    private val alert = "Нет сообщений"
-    fun addMessage(id: Int, message: Message) {
-        chats.getOrPut(id) { Chat() }.messages += message
-    }
-
-    fun printChats(): Any {
-        return chats.ifEmpty { "Пока пусто" }
-    }
-
-    fun deleteChat(id: Int) {
-        val chat = chats[id] ?: throw ChatNotFoundException("Чатов нет")
-        chat.messages.removeAll { _ -> true }
-        chat.messages += Message("Данный чат удален", delete = true)
-        chats[id] = chat
-    }
-
-    fun deleteMessage(id: Int, number: Int) {
-        val chat = chats[id] ?: throw ChatNotFoundException(alert)
-        chat.messages.filter { !it.delete }[number - 1].delete = true
-        chats[id] = chat
-    }
-
-    fun getLastMessages(): List<String> {
-        return chats.values.map { chat -> chat.messages.lastOrNull { !it.delete }?.text ?: alert }
-    }
-
-    fun getChatsNotRead(): List<String> {
-        return chats.values.map { chat -> chat.messages.lastOrNull { !it.read }?.text ?: "нет непрочитанных сообщений" }
-    }
-
-    fun getMessages(id: Int, count: Int): List<Message> {
-        val chat = chats[id] ?: throw ChatNotFoundException(alert)
-        return chat.messages.filter { !it.delete }.takeLast(count).onEach { it.read = true }
-    }
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".MainActivity">
 
 
-}
+    <ImageView
+        android:id="@+id/avatar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@tools:sample/avatars"
+        android:importantForAccessibility="no" />
 
-class ChatNotFoundException(message: String) : RuntimeException(message)
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:ellipsize="end"
+        android:singleLine="true"
+        app:layout_constraintBottom_toTopOf="@+id/textView2"
+        app:layout_constraintEnd_toStartOf="@+id/menu"
+        app:layout_constraintStart_toEndOf="@+id/avatar"
+        app:layout_constraintTop_toTopOf="@+id/avatar"
+        tools:text="Нетология. Университет интернет-профессий" />
 
-data class Chat(
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/avatar"
+        app:layout_constraintStart_toEndOf="@+id/avatar"
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        tools:text="21 мая в 18:36" />
 
-    var messages: MutableList<Message> = mutableListOf()
-)
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:barrierMargin="16dp"
+        app:constraint_referenced_ids="avatar,textView2" />
 
-data class Message(
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="555"
+        app:layout_constraintTop_toBottomOf="@id/barrier" />
 
-    val text: String = "text",
-    var read: Boolean = false,
-    var delete: Boolean = false
-)
-
-fun main() {
-
-    val message = Message(text = "первое")
-    val message1 = Message(text = "второе")
-    val message2 = Message(text = "третье")
-    val service = ChatService()
-    service.addMessage(1, message)
-    service.addMessage(2, message1)
-    service.addMessage(2, message2)
-    service.addMessage(3, message2)
-    service.deleteMessage(1, 1)
-    for (i in service.chats){
-        println(i)
-    }
-}
-
-
-import org.junit.Test
-
-import org.junit.Assert.*
-
-class ChatServiceTest {
-
-    private val service = ChatService()
-
-    @Test
-    fun addMessage() {
-
-        val result = service.addMessage(1, Message())
-        assertNotNull(result)
-    }
-
-    @Test
-    fun printChats() {
-        service.addMessage(1, Message())
-        service.addMessage(1, Message())
-        val result = service.printChats()
-        assertEquals(service.chats, result)
-    }
-
-    @Test
-    fun notPrintChats() {
-        val result = service.printChats()
-        assertEquals("Пока пусто", result)
-    }
-
-    @Test
-    fun deleteChat() {
-        service.addMessage(1, Message())
-        service.addMessage(2, Message())
-        service.deleteChat(2)
-        val result = service.chats.getValue(2).messages[0].delete
-        assertTrue(result)
-    }
-
-    @Test(expected = ChatNotFoundException::class)
-    fun notDeleteChat() {
-        val result = service.deleteChat(1)
-    }
-
-    @Test
-    fun deleteMessage() {
-        service.addMessage(1, Message())
-        service.addMessage(1, Message())
-        service.deleteMessage(1, 1)
-        val result = service.chats.getValue(1).messages[0].delete
-        assertTrue(result)
-    }
-
-
-    @Test(expected = ChatNotFoundException::class)
-    fun notDeleteMessage() {
-        val result = service.deleteMessage(1, 1)
-    }
-
-    @Test
-    fun getLastMessages() {
-        service.addMessage(1, Message())
-        val result = service.getLastMessages().size
-        assertEquals(1, result)
-    }
-
-     @Test
-    fun getLastMessagesIfDelete() {
-        service.addMessage(1, Message())
-        service.deleteMessage(1,1)
-        val result = service.getLastMessages().joinToString ()
-        assertEquals("Нет сообщений", result)
-    }
-    @Test
-    fun getLastChatsNotRead() {
-         service.addMessage(1, Message(read = true))
-        val result = service.getLastChatsNotRead().joinToString ()
-        assertEquals("нет непрочитанных сообщений", result)
-    }
-    @Test(expected = ChatNotFoundException::class)
-    fun getMessagesException() {
-        service.addMessage(1, Message())
-        val result = service.getMessages(4, 1)
-    }
-    @Test
-    fun getMessage(){
-        service.addMessage(1, Message())
-        service.addMessage(2, Message())
-       val result=service.getMessages(1,1).size
-        assertEquals(1, result)
-    }
-}
-
-
+    <ImageButton
+        android:id="@+id/menu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/avatar"
+        app:srcCompat="@drawable/menu"
+        android:importantForAccessibility="no" />
+</androidx.constraintlayout.widget.ConstraintLayout>
