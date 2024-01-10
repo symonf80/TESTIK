@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout 
-xmlns:android="http://schemas.android.com/apk/res/android"
-
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -31,7 +29,7 @@ xmlns:android="http://schemas.android.com/apk/res/android"
         app:layout_constraintEnd_toStartOf="@+id/menu"
         app:layout_constraintStart_toEndOf="@+id/avatar"
         app:layout_constraintTop_toTopOf="@+id/avatar"
-        tools:text="Нетология. Университет интернет-профессий" />
+        tools:text="@sample/posts.json/data/author" />
 
     <TextView
         android:id="@+id/textView2"
@@ -41,7 +39,7 @@ xmlns:android="http://schemas.android.com/apk/res/android"
         app:layout_constraintBottom_toBottomOf="@+id/avatar"
         app:layout_constraintStart_toEndOf="@+id/avatar"
         app:layout_constraintTop_toBottomOf="@+id/textView"
-        tools:text="21 мая в 18:36" />
+        tools:text="@sample/posts.json/data/published" />
 
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/barrier"
