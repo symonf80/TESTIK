@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:ellipsize="end"
-        android:singleLine="true"
+        android:maxLines="1"
         app:layout_constraintBottom_toTopOf="@+id/textView2"
         app:layout_constraintEnd_toStartOf="@+id/menu"
         app:layout_constraintStart_toEndOf="@+id/avatar"
