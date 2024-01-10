@@ -67,4 +67,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/avatar"
         app:srcCompat="@drawable/menu" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:barrierMargin="16dp"
+        app:constraint_referenced_ids="text" />
 </androidx.constraintlayout.widget.ConstraintLayout>
