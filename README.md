@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
     private fun roundOffDecimal(number: Double): String {
         val decimalFormat = DecimalFormat("#.#")
         decimalFormat.roundingMode = RoundingMode.FLOOR
-        return decimalFormat.format(number)
+        return decimalFormat.format(number).replace(",",".")
     }
 
 }
