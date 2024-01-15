@@ -1,4 +1,9 @@
-
+1.likes
+2.-
+3.+
+4.+
+5.-
+root не срабатывает на ImageButton и если на элементе установлен свой обработчик событий
 
 
 class MainActivity : AppCompatActivity() {
