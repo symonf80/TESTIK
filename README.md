@@ -65,39 +65,34 @@ class PostViewModel : ViewModel() {
 
 class MainActivity : AppCompatActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         val viewModel: PostViewModel by viewModels()
-
         val calc = Service()
-       viewModel.data.observe(this) { post ->
+        viewModel.data.observe(this) { post ->
             with(binding) {
-                textView.text = post.author
-                textView2.text = post.published
-                text.text = post.content
-                likes.setImageResource(
-                    if (post.likedByMe) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24
-                )
+                author.text = post.author
+                published.text = post.published
+                content.text = post.content
                 tvLikes.text = calc.counter(post.likes)
                 tvRepost.text = calc.counter(post.repost)
                 tvViews.text = calc.counter(post.views)
-                if (post.likedByMe) {
-                    likes.setImageResource(R.drawable.baseline_favorite_24)
-                }
-              likes.setOnClickListener {
-                    println("likes")
+                likes.setImageResource(
+                    if (post.likedByMe) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24
+                )
+
+                likes.setOnClickListener {
                     viewModel.like()
 
                 }
-             repost.setOnClickListener {
+                repost.setOnClickListener {
                     viewModel.repost()
 
                 }
             }
         }
-
     }
 }
 
