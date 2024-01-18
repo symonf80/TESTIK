@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
         val viewModel: PostViewModel by viewModels()
 
         val calc = Service()
-        viewModel.data.observe(this) { post ->
+       viewModel.data.observe(this) { post ->
             with(binding) {
                 textView.text = post.author
                 textView2.text = post.published
@@ -80,27 +80,22 @@ class MainActivity : AppCompatActivity() {
                 likes.setImageResource(
                     if (post.likedByMe) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24
                 )
-
                 tvLikes.text = calc.counter(post.likes)
                 tvRepost.text = calc.counter(post.repost)
                 tvViews.text = calc.counter(post.views)
                 if (post.likedByMe) {
                     likes.setImageResource(R.drawable.baseline_favorite_24)
                 }
-
-                likes.setOnClickListener {
+              likes.setOnClickListener {
+                    println("likes")
                     viewModel.like()
-                    tvLikes.text = calc.counter(post.likes)
-                    likes.setImageResource(if (post.likedByMe) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24)
+
                 }
-                repost.setOnClickListener {
+             repost.setOnClickListener {
                     viewModel.repost()
-                    tvRepost.text = calc.counter(post.repost)
 
                 }
             }
-
-
         }
 
     }
