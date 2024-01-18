@@ -1,10 +1,67 @@
-1.likes
-2.-
-3.+
-4.+
-5.-
-root не срабатывает на ImageButton и если на элементе установлен свой обработчик событий
+data class Post(
 
+    val id: Int,
+    val author:String,
+    val content:String,
+    val published:String,
+    val likes: Int,
+    val repost:Int,
+    val views:Int,
+    val likedByMe: Boolean
+)
+
+interface PostRepository {
+
+    fun get(): LiveData<Post>
+    fun like()
+    fun repost()
+    fun views()
+}
+
+class PostRepositoryInMemoryImpl : PostRepository {
+
+    private var post = Post(
+        id = 1,
+        author = "Нетология. Университет интернет-профессий",
+        content = "Привет,это новая Нетология!Когда-то Нетология начиналась с интенсивов по онлайн-маркетингу.Затем появились курсы по дизайну,разработке,аналитике и управлению.Мы растём сами и помогаем расти студентам: от новичков до уверенных профессионалов. Но самое важное остаётся с нами: мы верим,что в каждом уже есть сила,которая заставляет хотеть больше,целиться выше,бежать быстрее.Наша миссия - помочь встать на путь роста и начать цепочку перемен - http//netolo.gy/fyb",
+        published = "21 мая в 18:36",
+        likes = 999,
+        repost = 556,
+        views = 12100,
+        likedByMe = false
+    )
+    private val data = MutableLiveData(post)
+
+    override fun get(): LiveData<Post> = data
+
+    override fun like() {
+        post = post.copy(
+            likedByMe = !post.likedByMe,
+            likes = if (post.likedByMe) post.likes - 1 else post.likes + 1
+        )
+        data.value = post
+    }
+
+    override fun repost() {
+        post = post.copy(repost = post.repost + 1)
+        data.value = post
+    }
+
+    override fun views() {
+        post = post.copy(views = post.views)
+        data.value = post
+    }
+
+
+}
+
+class PostViewModel : ViewModel() {
+
+    private val repository: PostRepository = PostRepositoryInMemoryImpl()
+    val data = repository.get()
+    fun like() = repository.like()
+    fun repost() = repository.repost()
+}
 
 class MainActivity : AppCompatActivity() {
 
@@ -12,71 +69,55 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        val post = Post(
-            id = 0,
-            likes = 1899,
-            repost = 1897,
-            likedByMe = false
-        )
-        with(binding) {
-            tvLikes.text = counter(post.likes)
-            tvRepost.text=counter(post.repost)
-            if (post.likedByMe) {
-                likes.setImageResource(R.drawable.baseline_favorite_24)
+        val viewModel: PostViewModel by viewModels()
+
+        val calc = Service()
+        viewModel.data.observe(this) { post ->
+            with(binding) {
+                textView.text = post.author
+                textView2.text = post.published
+                text.text = post.content
+                likes.setImageResource(
+                    if (post.likedByMe) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24
+                )
+
+                tvLikes.text = calc.counter(post.likes)
+                tvRepost.text = calc.counter(post.repost)
+                tvViews.text = calc.counter(post.views)
+                if (post.likedByMe) {
+                    likes.setImageResource(R.drawable.baseline_favorite_24)
+                }
+
+                likes.setOnClickListener {
+                    viewModel.like()
+                    tvLikes.text = calc.counter(post.likes)
+                    likes.setImageResource(if (post.likedByMe) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24)
+                }
+                repost.setOnClickListener {
+                    viewModel.repost()
+                    tvRepost.text = calc.counter(post.repost)
+
+                }
             }
 
-            likes.setOnClickListener {
-                println("likes")
-                if (post.likedByMe) post.likes-- else post.likes++
-                post.likedByMe = !post.likedByMe
-                tvLikes.text = counter(post.likes)
-                likes.setImageResource(if (post.likedByMe) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24)
 
-            }
-            repost.setOnClickListener {
-                post.repost++
-                tvRepost.text = counter(post.repost)
-
-            }
-            root.setOnClickListener {
-                println("root")
-            }
-            avatar.setOnClickListener {
-                println("avatar")
-            }
         }
+
     }
-
-    private fun counter(item: Int): String {
-        return when (item) {
-            in 1000..1099 -> {
-                val num = roundOffDecimal(item / 1000.0)
-                (num + "K")
-            }
-
-            in 1100..9999 -> {
-                val num = roundOffDecimal(item / 1000.0)
-                (num + "K")
-            }
-
-            in 10_000..999_999 -> {
-                ((item / 1000).toString() + "K")
-            }
-
-            in 1_000_000..1_000_000_000 -> {
-                val num = roundOffDecimal(item / 1_000_000.0)
-                (num + "M")
-            }
-
-            else -> item.toString()
-        }
-    }
-
-    private fun roundOffDecimal(number: Double): String {
-        val decimalFormat = DecimalFormat("#.#")
-        decimalFormat.roundingMode = RoundingMode.FLOOR
-        return decimalFormat.format(number).replace(",",".")
-    }
-
 }
 
+
+dependencies {
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation("androidx.activity:activity-ktx:1.8.2")
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+}
