@@ -1,113 +1,37 @@
-data class Post(
 
-    val id: Int,
-    val author:String,
-    val content:String,
-    val published:String,
-    val likes: Int,
-    val repost:Int,
-    val views:Int,
-    val likedByMe: Boolean
-)
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
 
-interface PostRepository {
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
 
-    fun get(): LiveData<Post>
-    fun like()
-    fun repost()
-    fun views()
-}
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        android:background="#575353"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="ContentDescription" />
 
-class PostRepositoryInMemoryImpl : PostRepository {
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="file"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-    private var post = Post(
-        id = 1,
-        author = "Нетология. Университет интернет-профессий",
-        content = "Привет,это новая Нетология!Когда-то Нетология начиналась с интенсивов по онлайн-маркетингу.Затем появились курсы по дизайну,разработке,аналитике и управлению.Мы растём сами и помогаем расти студентам: от новичков до уверенных профессионалов. Но самое важное остаётся с нами: мы верим,что в каждом уже есть сила,которая заставляет хотеть больше,целиться выше,бежать быстрее.Наша миссия - помочь встать на путь роста и начать цепочку перемен - http//netolo.gy/fyb",
-        published = "21 мая в 18:36",
-        likes = 999,
-        repost = 556,
-        views = 12100,
-        likedByMe = false
-    )
-    private val data = MutableLiveData(post)
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnSent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="отправить"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    override fun get(): LiveData<Post> = data
-
-    override fun like() {
-        post = post.copy(
-            likedByMe = !post.likedByMe,
-            likes = if (post.likedByMe) post.likes - 1 else post.likes + 1
-        )
-        data.value = post
-    }
-
-    override fun repost() {
-        post = post.copy(repost = post.repost + 1)
-        data.value = post
-    }
-
-    override fun views() {
-        post = post.copy(views = post.views)
-        data.value = post
-    }
-
-
-}
-
-class PostViewModel : ViewModel() {
-
-    private val repository: PostRepository = PostRepositoryInMemoryImpl()
-    val data = repository.get()
-    fun like() = repository.like()
-    fun repost() = repository.repost()
-}
-
-class MainActivity : AppCompatActivity() {
-
-     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        val viewModel: PostViewModel by viewModels()
-        val calc = Service()
-        viewModel.data.observe(this) { post ->
-            with(binding) {
-                author.text = post.author
-                published.text = post.published
-                content.text = post.content
-                tvLikes.text = calc.counter(post.likes)
-                tvRepost.text = calc.counter(post.repost)
-                tvViews.text = calc.counter(post.views)
-                likes.setImageResource(
-                    if (post.likedByMe) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24
-                )
-
-                likes.setOnClickListener {
-                    viewModel.like()
-
-                }
-                repost.setOnClickListener {
-                    viewModel.repost()
-
-                }
-            }
-        }
-    }
-}
-
-
-dependencies {
-
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
-    implementation("androidx.activity:activity-ktx:1.8.2")
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    testImplementation("androidx.arch.core:core-testing:2.2.0")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-}
+</androidx.constraintlayout.widget.ConstraintLayout>
