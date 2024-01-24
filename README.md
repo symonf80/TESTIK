@@ -167,10 +167,12 @@ class MainActivity : AppCompatActivity() {
 # PostsAdapter (в пакет adapter)
 
 class PostsAdapter(
+
     private val onLike: (Post) -> Unit,
     private val onShare: (Post) -> Unit
 ) :
     RecyclerView.Adapter<PostViewHolder>() {
+    
     var list: List<Post> = emptyList()
         set(value) {
             field = value
