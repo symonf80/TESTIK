@@ -151,10 +151,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val viewModel: PostViewModel by viewModels()
-        val adapter = PostsAdapter {
+         val adapter = PostsAdapter ({
             viewModel.likeById(it.id)
+        },{
             viewModel.repost(it.id)
-        }
+        })
 
         viewModel.data.observe(this) { posts ->
             adapter.list = posts
