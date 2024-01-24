@@ -164,7 +164,7 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-# PostsAdapter
+# PostsAdapter (в пакет adapter)
 
 class PostsAdapter(
     private val onLike: (Post) -> Unit,
@@ -295,7 +295,8 @@ class PostRepositoryInMemoryImpl : PostRepository {
 
     override fun repost(id: Long) {
         posts = posts.map {
-            it.copy(repost = it.repost + 1)
+            if (it.id != id) it else
+                it.copy(repost = it.repost + 1)
         }
         data.value = posts
     }
