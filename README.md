@@ -308,3 +308,64 @@
         }
     }
     }
+
+
+# Group
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrierTop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:barrierDirection="top"
+        app:constraint_referenced_ids="close" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/group"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginBottom="24dp"
+        android:background="@color/white"
+        android:visibility="gone"
+        app:constraint_referenced_ids="create,message,netol,close"
+        app:layout_constraintBottom_toTopOf="@+id/edit" />
+
+    <ImageView
+        android:id="@+id/create"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/baseline_create_24"
+        app:layout_constraintBottom_toBottomOf="@id/group"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/group" />
+
+    <TextView
+        android:id="@+id/message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="Edit Message"
+        android:textColor="#2B8AB5"
+        app:layout_constraintBottom_toTopOf="@+id/netol"
+        app:layout_constraintStart_toEndOf="@+id/create"
+        app:layout_constraintTop_toTopOf="@+id/create" />
+
+    <TextView
+        android:id="@+id/netol"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="Нетология"
+
+        app:layout_constraintBottom_toBottomOf="@+id/create"
+        app:layout_constraintStart_toEndOf="@+id/create"
+        app:layout_constraintTop_toBottomOf="@+id/message" />
+
+    <ImageButton
+        android:id="@+id/close"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/baseline_close_24"
+        app:layout_constraintBottom_toBottomOf="@id/group"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/group" />
