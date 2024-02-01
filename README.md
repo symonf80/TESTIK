@@ -101,6 +101,24 @@
     </style>
     </resources>
 
+# PostAdapter
+      RecyclerView.ViewHolder(binding.root) {
+    private val service = Service()
+    fun bind(post: Post) {
+        with(binding) {
+            author.text = post.author
+            published.text = post.published
+            content.text = post.content
+            likes.text = service.counter(post.likes)
+            repost.text = service.counter(post.repost)
+            tvViews.text = service.counter(post.views)
+
+            likes.isChecked = post.likedByMe
+
+            likes.setOnClickListener {
+                onInteractionListener.onLike(post)
+            }
+
     
   
 
