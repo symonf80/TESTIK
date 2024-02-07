@@ -1,124 +1,127 @@
-# card_post.xml
-     <com.google.android.material.button.MaterialButton
-        android:id="@+id/menu"
-        style="@style/Widget.AppTheme.MenuButton"
+class NewPostActivity : AppCompatActivity() {
+
+       override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val binding = ActivityNewPostBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        binding.ok.setOnClickListener {
+            val text = binding.edit.text.toString()
+            if (text.isNotBlank()) {
+                setResult(RESULT_OK, Intent().apply { putExtra(Intent.EXTRA_TEXT, text) })
+            } else {
+                setResult(RESULT_CANCELED)
+            }
+            finish()
+        }
+    }
+    }
+
+    object NewPostContract : ActivityResultContract<Unit, String?>() {
+    override fun createIntent(context: Context, input: Unit) =
+        Intent(context, NewPostActivity::class.java)
+
+
+    override fun parseResult(resultCode: Int, intent: Intent?) =
+        intent?.getStringExtra(Intent.EXTRA_TEXT)
+
+    }
+
+   <?xml version="1.0" encoding="utf-8"?>
+    <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditText
+        android:id="@+id/edit"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        android:gravity="top"
+        android:hint="Post text"
+        android:importantForAutofill="no"
+        android:inputType="textMultiLine"
+        android:padding="16dp"
+
+        />
+
+    <com.google.android.material.bottomappbar.BottomAppBar
+        android:id="@+id/bottomAppBar"
+        style="@style/Widget.Material3.BottomAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+
+        />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/ok"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:importantForAccessibility="no"
-        app:icon="@drawable/condition_of_menu"
-        app:layout_constraintBottom_toBottomOf="@+id/avatar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_anchor="@id/bottomAppBar"
+        app:srcCompat="@drawable/baseline_add_24" />
 
-         <com.google.android.material.button.MaterialButton
-        android:id="@+id/likes"
-        style="@style/Widget.AppTheme.LikeButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checkable="true"
-        app:icon="@drawable/condition_of_like"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/barrier2" />
 
-        <com.google.android.material.button.MaterialButton
-        android:id="@+id/repost"
-        style="@style/Widget.AppTheme.ShareButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checkable="true"
-        app:icon="@drawable/condition_of_share"
-        app:layout_constraintBottom_toBottomOf="@+id/likes"
-        app:layout_constraintStart_toEndOf="@+id/likes"
-        app:layout_constraintTop_toTopOf="@+id/likes" />
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-# drawable 
-    condition_of_menu.xml
-    
-    <?xml version="1.0" encoding="utf-8"?>
-    <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/menu" />
-    </selector>
 
-    condition_of_share.xml
 
-    <?xml version="1.0" encoding="utf-8"?>
-    <selector xmlns:android="http://schemas.android.com/apk/res/android">  
-    <item android:drawable="@drawable/baseline_forward_to_inbox_24" />
-    </selector>
 
-    condition_of_like.xml
+class MainActivity : AppCompatActivity() {
 
-    <?xml version="1.0" encoding="utf-8"?>
-    <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/baseline_favorite_24" android:state_checked="true" />
-    <item android:drawable="@drawable/baseline_favorite_border_24" />
-    </selector>
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        val viewModel: PostViewModel by viewModels()
 
-# color
-    like_tint.xml
-    <?xml version="1.0" encoding="utf-8"?>
-    <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="#ff0000" android:state_checked="true" />
-    <item android:color="?attr/colorControlNormal" />
-    </selector>
+        val newPostLauncher = registerForActivityResult(NewPostContract) {result->
+            result?:return@registerForActivityResult
+            viewModel.changeContentAndSave(result)
 
-    menu_tint.xml
-    <?xml version="1.0" encoding="utf-8"?>
-    <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="?attr/colorControlNormal" />
-    </selector>
-
-    share_tint.xml
-    <?xml version="1.0" encoding="utf-8"?>
-    <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="?attr/colorControlNormal" />
-    </selector>
-# themes.xml
-    <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.MyHomeWork" parent="Theme.Material3.DayNight.NoActionBar">
-      <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-    </style>
-
-    <style name="Widget.AppTheme.LikeButton" parent="Widget.Material3.Button.TextButton.Icon">
-        <item name="iconTint">@color/like_tint</item>
-        <item name="backgroundTint">@android:color/transparent</item>
-        <item name="iconSize">@dimen/size24dp</item>
-    </style>
-
-    <style name="Widget.AppTheme.ShareButton" parent="Widget.Material3.Button.TextButton.Icon">
-        <item name="iconTint">@color/share_tint</item>
-        <item name="backgroundTint">@android:color/transparent</item>
-        <item name="iconSize">@dimen/size24dp</item>
-    </style>
-
-    <style name="Widget.AppTheme.MenuButton" parent="Widget.Material3.Button.IconButton">
-        <item name="iconTint">@color/menu_tint</item>
-        <item name="backgroundTint">@android:color/transparent</item>
-        <item name="iconSize">@dimen/size24dp</item>
-    </style>
-    </resources>
-
-# PostAdapter
-      RecyclerView.ViewHolder(binding.root) {
-    private val service = Service()
-    fun bind(post: Post) {
-        with(binding) {
-            author.text = post.author
-            published.text = post.published
-            content.text = post.content
-            likes.text = service.counter(post.likes)
-            repost.text = service.counter(post.repost)
-            tvViews.text = service.counter(post.views)
-
-            likes.isChecked = post.likedByMe
-
-            likes.setOnClickListener {
-                onInteractionListener.onLike(post)
+        }
+        val adapter = PostsAdapter(object : OnInteractionListener {
+            override fun onLike(post: Post) {
+                viewModel.likeById(post.id)
             }
 
-    
-  
+            override fun onShare(post: Post) {
+                viewModel.repost(post.id)
+            }
 
+            override fun onRemove(post: Post) {
+                viewModel.removeById(post.id)
+            }
+
+            override fun onEdit(post: Post) {
+                viewModel.edit(post)
+            }
+
+        })
+        binding.list.adapter = adapter
+        viewModel.data.observe(this) { posts ->
+            val newPost = adapter.currentList.size < posts.size && adapter.currentList.size > 0
+            adapter.submitList(posts) {
+                if (newPost) {
+                    binding.list.smoothScrollToPosition(0)
+                }
+            }
+        }
+     
+        binding.add.setOnClickListener {
+            newPostLauncher.launch()
+   
+
+        }
+    }
+    }
+ <style name="Widget.AppTheme.PlayButton" parent="Widget.Material3.Button.IconButton">      
+                <item name="iconTint">@color/white</item>
+        <item name="icon">@drawable/baseline_arrow_right_24</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+       <item name="iconSize">48dp</item>
+    </style>
+    
