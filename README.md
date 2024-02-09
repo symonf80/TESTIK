@@ -1,76 +1,159 @@
-class NewPostActivity : AppCompatActivity() {
+data class Post(
+ 
+    val id: Long,
+    val author:String,
+    val content:String,
+    val published:String,
+    val likes: Int,
+    val repost:Int,
+    val views:Int,
+    val likedByMe: Boolean,
+    val video:String
+    )
 
-       override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val binding = ActivityNewPostBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        binding.ok.setOnClickListener {
-            val text = binding.edit.text.toString()
-            if (text.isNotBlank()) {
-                setResult(RESULT_OK, Intent().apply { putExtra(Intent.EXTRA_TEXT, text) })
-            } else {
-                setResult(RESULT_CANCELED)
+    ----------------------------------------
+    val empty = Post(
+     id = 0,
+    content = "",
+    author = "",
+    likedByMe = false,
+    published = "",
+    likes = 0,
+    repost = 0,
+    views = 0,
+    video = ""
+    )
+
+    class PostViewModel : ViewModel() {
+  
+    private val repository: PostRepository = PostRepositoryInMemoryImpl()
+    val data = repository.getAll()
+    val edited = MutableLiveData(empty)
+
+    fun changeContentAndSave(content: String) {
+
+        edited.value?.let {
+            if (content != it.content) {
+                repository.save(it.copy(content = content))
             }
-            finish()
+            edited.value = empty
+        }
+    }
+
+    fun likeById(id: Long) = repository.likeById(id)
+    fun repost(id: Long) = repository.repost(id)
+    fun removeById(id: Long) = repository.removeById(id)
+    fun edit(post: Post) {
+        edited.value = post
+    }
+
+    fun closeEdited(post: Post) {
+        edited.value = empty
+    }
+
+    }
+
+--------------------------------------------------------
+    interface OnInteractionListener {
+        fun onLike(post: Post)
+    fun onShare(post: Post)
+    fun onRemove(post: Post)
+    fun onEdit(post: Post)
+    fun onPlay(post: Post)
+
+     }
+
+     class PostsAdapter(
+    private val onInteractionListener: OnInteractionListener
+
+     ) : ListAdapter<Post, PostViewHolder>(PostDiffCallback) {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
+        val view = CardPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return PostViewHolder(view, onInteractionListener)
+    }
+
+    override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
+        holder.bind(getItem(position))
+    }
+    }
+
+
+     class PostViewHolder(
+    private val binding: CardPostBinding,
+    private val onInteractionListener: OnInteractionListener
+
+    ) :
+    RecyclerView.ViewHolder(binding.root) {
+    private val service = Service()
+
+    fun bind(post: Post) {
+        with(binding) {
+            author.text = post.author
+            published.text = post.published
+            content.text = post.content
+            likes.text = service.counter(post.likes)
+            repost.text = service.counter(post.repost)
+            tvViews.text = service.counter(post.views)
+            likes.isChecked = post.likedByMe
+            likes.setOnClickListener {
+                onInteractionListener.onLike(post)
+            }
+            repost.setOnClickListener {
+                onInteractionListener.onShare(post)
+            }
+
+            play.setOnClickListener {
+                onInteractionListener.onPlay(post)
+            }
+            video.setOnClickListener {
+                onInteractionListener.onPlay(post)
+            }
+            video.viewTreeObserver.apply {
+                if (post.video.isNotEmpty() ) {
+                    play.visibility = View.VISIBLE
+                    video.visibility = View.VISIBLE
+                }else{
+                    play.visibility = View.GONE
+                    video.visibility = View.GONE
+                }
+            }
+            menu.setOnClickListener {
+
+                PopupMenu(it.context, it).apply {
+                    inflate(R.menu.options_post)
+                    setOnMenuItemClickListener { item ->
+                        when (item.itemId) {
+                            R.id.remove -> {
+                                onInteractionListener.onRemove(post)
+                                true
+                            }
+
+                            R.id.edit -> {
+                                onInteractionListener.onEdit(post)
+                                true
+                            }
+
+                            else -> false
+                        }
+
+                    }
+                }.show()
+            }
+
         }
     }
     }
 
-    object NewPostContract : ActivityResultContract<Unit, String?>() {
-    override fun createIntent(context: Context, input: Unit) =
-        Intent(context, NewPostActivity::class.java)
+    object PostDiffCallback : DiffUtil.ItemCallback<Post>() {
 
-
-    override fun parseResult(resultCode: Int, intent: Intent?) =
-        intent?.getStringExtra(Intent.EXTRA_TEXT)
-
+    override fun areItemsTheSame(oldItem: Post, newItem: Post) = oldItem.id == newItem.id
+    override fun areContentsTheSame(oldItem: Post, newItem: Post) = oldItem == newItem
     }
 
-   <?xml version="1.0" encoding="utf-8"?>
-    <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    ---------------------------------------------------------
 
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <EditText
-        android:id="@+id/edit"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/transparent"
-        android:gravity="top"
-        android:hint="Post text"
-        android:importantForAutofill="no"
-        android:inputType="textMultiLine"
-        android:padding="16dp"
-
-        />
-
-    <com.google.android.material.bottomappbar.BottomAppBar
-        android:id="@+id/bottomAppBar"
-        style="@style/Widget.Material3.BottomAppBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-
-        />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/ok"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:importantForAccessibility="no"
-        app:layout_anchor="@id/bottomAppBar"
-        app:srcCompat="@drawable/baseline_add_24" />
-
-
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-
-
-
-class MainActivity : AppCompatActivity() {
+    class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,11 +161,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         val viewModel: PostViewModel by viewModels()
 
-        val newPostLauncher = registerForActivityResult(NewPostContract) {result->
-            result?:return@registerForActivityResult
+        val newPostLauncher = registerForActivityResult(NewPostContract) { result ->
+            result ?: return@registerForActivityResult
             viewModel.changeContentAndSave(result)
 
+
         }
+
         val adapter = PostsAdapter(object : OnInteractionListener {
             override fun onLike(post: Post) {
                 viewModel.likeById(post.id)
@@ -97,7 +182,15 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onEdit(post: Post) {
+
                 viewModel.edit(post)
+            }
+
+
+            override fun onPlay(post: Post) {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(post.video))
+                val viewIntent = Intent.createChooser(intent, "My")
+                startActivity(viewIntent)
             }
 
         })
@@ -110,105 +203,75 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-     
-        binding.add.setOnClickListener {
-            newPostLauncher.launch()
-   
 
+        viewModel.edited.observe(this) { post ->
+            if (post.id != 0L) {
+                newPostLauncher.launch(post.content)
+
+            }
+        }
+        binding.add.setOnClickListener {
+
+            newPostLauncher.launch(null)
         }
     }
     }
- <style name="Widget.AppTheme.PlayButton" parent="Widget.Material3.Button.IconButton">      
-                <item name="iconTint">@color/white</item>
-        <item name="icon">@drawable/baseline_arrow_right_24</item>
-        <item name="backgroundTint">@android:color/transparent</item>
-       <item name="iconSize">48dp</item>
-    </style>
+    ----------------------------------------
+
+     class NewPostActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val binding = ActivityNewPostBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val editText = intent.getStringExtra(CONTENT_KEY)
+        binding.edit.setText(editText)
+        binding.edit.requestFocus()
+
+        binding.ok.setOnClickListener {
+
+            val text = binding.edit.text.toString()
+            if (text.isNotBlank()) {
+                setResult(RESULT_OK, Intent().apply { putExtra(NEW_POST_CONTENT_KEY, text) })
+            } else {
+                setResult(RESULT_CANCELED)
+            }
+            finish()
+        }
+
+        binding.bottomAppBar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.cancel -> {
+
+                    finish()
+                    true
+                }
+
+                else -> {
+
+                    false
+                }
+            }
+        }
+    }
+
+    companion object {
+        const val CONTENT_KEY = "content"
+        const val NEW_POST_CONTENT_KEY = "newPostContent"
+        const val VIDEO_URL_KEY = "videoUrlContent"
+    }
+
+    }
+
+    object NewPostContract : ActivityResultContract<String?, String?>() {
+    override fun createIntent(context: Context, input: String?) =
+        Intent(context, NewPostActivity::class.java).putExtra(CONTENT_KEY, input)
+
+
+    override fun parseResult(resultCode: Int, intent: Intent?) =
+        intent?.getStringExtra(NEW_POST_CONTENT_KEY)
+
+    }
+    -----------------------------------------------
+
     
-    <?xml version="1.0" encoding="utf-8"?>
-    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".view.MainActivity">
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/card_post" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/add"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:importantForAccessibility="no"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/baseline_add_24" />
-
-    <androidx.constraintlayout.widget.Group
-        android:id="@+id/group"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        android:background="@color/white"
-        android:visibility="gone"
-        app:constraint_referenced_ids="create,message,netol,close"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <ImageView
-        android:id="@+id/create"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/baseline_create_24"
-        app:layout_constraintBottom_toBottomOf="@id/group"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/group" />
-
-    <TextView
-        android:id="@+id/message"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="Edit Message"
-        android:textColor="#2B8AB5"
-        app:layout_constraintBottom_toTopOf="@+id/netol"
-        app:layout_constraintStart_toEndOf="@+id/create"
-        app:layout_constraintTop_toTopOf="@+id/create" />
-
-    <TextView
-        android:id="@+id/netol"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="Нетология"
-
-        app:layout_constraintBottom_toBottomOf="@+id/create"
-        app:layout_constraintStart_toEndOf="@+id/create"
-        app:layout_constraintTop_toBottomOf="@+id/message" />
-
-    <ImageButton
-        android:id="@+id/close"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:background="@drawable/baseline_close_24"
-        app:layout_constraintBottom_toBottomOf="@id/group"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/group" />
-
-     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-
-
-
-
-
