@@ -273,5 +273,135 @@ data class Post(
 
     }
     -----------------------------------------------
+CARD_POST.XML
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/avatar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:importantForAccessibility="no"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/posta_avatar" />
+
+    <TextView
+        android:id="@+id/author"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        app:layout_constraintBottom_toTopOf="@+id/published"
+        app:layout_constraintEnd_toStartOf="@+id/menu"
+        app:layout_constraintStart_toEndOf="@+id/avatar"
+        app:layout_constraintTop_toTopOf="@+id/avatar"
+        tools:text="@sample/posts.json/data/author" />
+
+    <TextView
+        android:id="@+id/published"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/avatar"
+        app:layout_constraintStart_toStartOf="@+id/author"
+        app:layout_constraintTop_toBottomOf="@+id/author"
+        tools:text="@sample/posts.json/data/published" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:barrierMargin="16dp"
+        app:constraint_referenced_ids="avatar,published" />
+
+    <ImageView
+        android:id="@+id/video"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:visibility="gone"
+        android:background="@drawable/original"
+        app:layout_constraintTop_toBottomOf="@id/barrier2"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Widget.AppTheme.PlayButton"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@+id/video"
+        app:layout_constraintEnd_toEndOf="@+id/video"
+        app:layout_constraintStart_toStartOf="@+id/video"
+        app:layout_constraintTop_toTopOf="@+id/video" />
+
+    <TextView
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:autoLink="web"
+        android:lineSpacingExtra="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/barrier"
+        tools:text="@string/text" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/menu"
+        style="@style/Widget.AppTheme.MenuButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:importantForAccessibility="no"
+        app:icon="@drawable/condition_of_menu"
+        app:layout_constraintBottom_toBottomOf="@+id/avatar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:barrierMargin="16dp"
+        app:constraint_referenced_ids="content" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/likes"
+        style="@style/Widget.AppTheme.LikeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checkable="true"
+        app:icon="@drawable/condition_of_like"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/video" />
+
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/repost"
+        style="@style/Widget.AppTheme.ShareButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checkable="true"
+        app:icon="@drawable/condition_of_share"
+        app:layout_constraintBottom_toBottomOf="@+id/likes"
+        app:layout_constraintStart_toEndOf="@+id/likes"
+        app:layout_constraintTop_toTopOf="@+id/likes" />
+
+
+    <TextView
+        android:id="@+id/tvViews"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/repost"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/repost"
+        tools:text="0" />
+
+     </androidx.constraintlayout.widget.ConstraintLayout>
 
     
