@@ -56,6 +56,7 @@ class FeedFragment : Fragment() {
             }
 
             override fun onEdit(post: Post) {
+             findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
                 viewModel.edit(post)
             }
 
@@ -79,7 +80,7 @@ class FeedFragment : Fragment() {
 
         viewModel.edited.observe(viewLifecycleOwner) { post ->
             if (post.id != 0L) {
-               findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
+              
             }
         }
         binding.add.setOnClickListener {
