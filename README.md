@@ -1,172 +1,46 @@
-data class Post(
- 
-    val id: Long,
-    val author:String,
-    val content:String,
-    val published:String,
-    val likes: Int,
-    val repost:Int,
-    val views:Int,
-    val likedByMe: Boolean,
-    val video:String
-    )
 
 
-    ----------------------------------------
-    val empty = Post(
-     id = 0,
-    content = "",
-    author = "",
-    likedByMe = false,
-    published = "",
-    likes = 0,
-    repost = 0,
-    views = 0,
-    video = ""
-    )
-
-    class PostViewModel : ViewModel() {
-  
-    private val repository: PostRepository = PostRepositoryInMemoryImpl()
-    val data = repository.getAll()
-    val edited = MutableLiveData(empty)
-
-    fun changeContentAndSave(content: String) {
-
-        edited.value?.let {
-            if (content != it.content) {
-                repository.save(it.copy(content = content))
-            }
-            edited.value = empty
-        }
-    }
-
-    fun likeById(id: Long) = repository.likeById(id)
-    fun repost(id: Long) = repository.repost(id)
-    fun removeById(id: Long) = repository.removeById(id)
-    fun edit(post: Post) {
-        edited.value = post
-    }
-
-    fun closeEdited(post: Post) {
-        edited.value = empty
-    }
-
-    }
-
---------------------------------------------------------
-    interface OnInteractionListener {
-        fun onLike(post: Post)
-    fun onShare(post: Post)
-    fun onRemove(post: Post)
-    fun onEdit(post: Post)
-    fun onPlay(post: Post)
-
-     }
-
-     class PostsAdapter(
-    private val onInteractionListener: OnInteractionListener
-
-     ) : ListAdapter<Post, PostViewHolder>(PostDiffCallback) {
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
-        val view = CardPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return PostViewHolder(view, onInteractionListener)
-    }
-
-    override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
-        holder.bind(getItem(position))
-    }
-    }
-
-
-     class PostViewHolder(
-    private val binding: CardPostBinding,
-    private val onInteractionListener: OnInteractionListener
-
-    ) :
-    RecyclerView.ViewHolder(binding.root) {
-    private val service = Service()
-
-    fun bind(post: Post) {
-        with(binding) {
-            author.text = post.author
-            published.text = post.published
-            content.text = post.content
-            likes.text = service.counter(post.likes)
-            repost.text = service.counter(post.repost)
-            tvViews.text = service.counter(post.views)
-            likes.isChecked = post.likedByMe
-            likes.setOnClickListener {
-                onInteractionListener.onLike(post)
-            }
-            repost.setOnClickListener {
-                onInteractionListener.onShare(post)
-            }
-
-            play.setOnClickListener {
-                onInteractionListener.onPlay(post)
-            }
-            video.setOnClickListener {
-                onInteractionListener.onPlay(post)
-            }
-            video.viewTreeObserver.apply {
-                if (post.video.isNotEmpty() ) {
-                    play.visibility = View.VISIBLE
-                    video.visibility = View.VISIBLE
-                }else{
-                    play.visibility = View.GONE
-                    video.visibility = View.GONE
-                }
-            }
-            menu.setOnClickListener {
-
-                PopupMenu(it.context, it).apply {
-                    inflate(R.menu.options_post)
-                    setOnMenuItemClickListener { item ->
-                        when (item.itemId) {
-                            R.id.remove -> {
-                                onInteractionListener.onRemove(post)
-                                true
-                            }
-
-                            R.id.edit -> {
-                                onInteractionListener.onEdit(post)
-                                true
-                            }
-
-                            else -> false
-                        }
-
-                    }
-                }.show()
-            }
-
-        }
-    }
-    }
-
-    object PostDiffCallback : DiffUtil.ItemCallback<Post>() {
-
-    override fun areItemsTheSame(oldItem: Post, newItem: Post) = oldItem.id == newItem.id
-    override fun areContentsTheSame(oldItem: Post, newItem: Post) = oldItem == newItem
-    }
-
-    ---------------------------------------------------------
-
-    class MainActivity : AppCompatActivity() {
+class AppActivity2 : AppCompatActivity(R.layout.activity_app) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+
+        intent?.let {
+            if (it.action != Intent.ACTION_SEND) {
+                return@let
+            }
+            val text = it.getStringExtra(Intent.EXTRA_TEXT)
+            if (text?.isNotBlank() != true) {
+                return@let
+            }
+            intent.removeExtra(Intent.EXTRA_TEXT)
+            findNavController(R.id.nav_host_fragment).navigate(
+                R.id.action_feedFragment_to_newPostFragment,
+                Bundle().apply {
+                    textArg = text
+                }
+            )
+        }
+    }
+    }
+
+    package ru.netology.nmedia.view
+
+
+
+class FeedFragment : Fragment() {
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val binding = FragmentFeedBinding.inflate(
+            inflater, container, false
+        )
+
         val viewModel: PostViewModel by viewModels()
 
-        val newPostLauncher = registerForActivityResult(NewPostContract) { result ->
-            result ?: return@registerForActivityResult
-            viewModel.changeContentAndSave(result)
-
-
-        }
 
         val adapter = PostsAdapter(object : OnInteractionListener {
             override fun onLike(post: Post) {
@@ -182,20 +56,19 @@ data class Post(
             }
 
             override fun onEdit(post: Post) {
-
                 viewModel.edit(post)
             }
 
-
             override fun onPlay(post: Post) {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(post.video))
-                val viewIntent = Intent.createChooser(intent, "My")
+                val viewIntent = Intent.createChooser(intent, R.string.external_link.toString())
                 startActivity(viewIntent)
             }
 
+
         })
         binding.list.adapter = adapter
-        viewModel.data.observe(this) { posts ->
+        viewModel.data.observe(viewLifecycleOwner) { posts ->
             val newPost = adapter.currentList.size < posts.size && adapter.currentList.size > 0
             adapter.submitList(posts) {
                 if (newPost) {
@@ -204,204 +77,122 @@ data class Post(
             }
         }
 
-        viewModel.edited.observe(this) { post ->
+        viewModel.edited.observe(viewLifecycleOwner) { post ->
             if (post.id != 0L) {
-                newPostLauncher.launch(post.content)
-
+               findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
             }
         }
         binding.add.setOnClickListener {
+           findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
 
-            newPostLauncher.launch(null)
         }
+
+        return binding.root
     }
     }
-    ----------------------------------------
 
-     class NewPostActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val binding = ActivityNewPostBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        val editText = intent.getStringExtra(CONTENT_KEY)
-        binding.edit.setText(editText)
-        binding.edit.requestFocus()
+
+object StringArg : ReadWriteProperty<Bundle, String?> {
+
+    override fun getValue(thisRef: Bundle, property: KProperty<*>): String? =
+        thisRef.getString(property.name)
+
+
+    override fun setValue(thisRef: Bundle, property: KProperty<*>, value: String?) {
+        thisRef.putString(property.name, value)
+    }
+
+    }
+
+    class NewPostFragment : Fragment() {
+
+          companion object {
+          var Bundle.textArg: String? by StringArg
+
+    }
+
+    private val viewModel: PostViewModel by viewModels(
+        ownerProducer = ::requireParentFragment
+    )
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val binding = FragmentNewPostBinding.inflate(
+            inflater,
+            container,
+            false
+        )
+
+        arguments?.textArg?.let(binding.edit::setText)
+
 
         binding.ok.setOnClickListener {
-
-            val text = binding.edit.text.toString()
-            if (text.isNotBlank()) {
-                setResult(RESULT_OK, Intent().apply { putExtra(NEW_POST_CONTENT_KEY, text) })
-            } else {
-                setResult(RESULT_CANCELED)
-            }
-            finish()
+            viewModel.changeContentAndSave(binding.edit.text.toString())
+            AndroidUtils.hideKeyboard(requireView())
+            findNavController().navigateUp()
         }
+
 
         binding.bottomAppBar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.cancel -> {
+                cancel -> {
+                    val intent = Intent()
+                    if (TextUtils.isEmpty(binding.edit.text)) {
+                        activity?.setResult(Activity.RESULT_CANCELED, intent)
 
-                    finish()
-                    true
+                    }
+                    findNavController().navigateUp()
+
                 }
 
                 else -> {
-
-                    false
+                    findNavController().navigateUp()
                 }
             }
         }
-    }
-
-    companion object {
-        const val CONTENT_KEY = "content"
-        const val NEW_POST_CONTENT_KEY = "newPostContent"
-        const val VIDEO_URL_KEY = "videoUrlContent"
-    }
+        return binding.root
 
     }
 
-    object NewPostContract : ActivityResultContract<String?, String?>() {
-    override fun createIntent(context: Context, input: String?) =
-        Intent(context, NewPostActivity::class.java).putExtra(CONTENT_KEY, input)
-
-
-    override fun parseResult(resultCode: Int, intent: Intent?) =
-        intent?.getStringExtra(NEW_POST_CONTENT_KEY)
 
     }
-    -----------------------------------------------
-CARD_POST.XML
 
-    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<?xml version="1.0" encoding="utf-8"?>
+
+    <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_host_fragment"
+    android:name="androidx.navigation.fragment.NavHostFragment"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:padding="16dp">
+    android:layout_height="match_parent"
+    app:defaultNavHost="true"
+    app:navGraph="@navigation/nav_main"
+    tools:context=".view.AppActivity2" />
+----------------------------------------------------------------------
+     <activity
+            android:name=".view.AppActivity2"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <nav-graph android:value="@navigation/nav_main" />
 
-    <ImageView
-        android:id="@+id/avatar"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:importantForAccessibility="no"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/posta_avatar" />
-
-    <TextView
-        android:id="@+id/author"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        app:layout_constraintBottom_toTopOf="@+id/published"
-        app:layout_constraintEnd_toStartOf="@+id/menu"
-        app:layout_constraintStart_toEndOf="@+id/avatar"
-        app:layout_constraintTop_toTopOf="@+id/avatar"
-        tools:text="@sample/posts.json/data/author" />
-
-    <TextView
-        android:id="@+id/published"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/avatar"
-        app:layout_constraintStart_toStartOf="@+id/author"
-        app:layout_constraintTop_toBottomOf="@+id/author"
-        tools:text="@sample/posts.json/data/published" />
-
-    <androidx.constraintlayout.widget.Barrier
-        android:id="@+id/barrier"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:barrierDirection="bottom"
-        app:barrierMargin="16dp"
-        app:constraint_referenced_ids="avatar,published" />
-
-    <ImageView
-        android:id="@+id/video"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:visibility="gone"
-        android:background="@drawable/original"
-        app:layout_constraintTop_toBottomOf="@id/barrier2"/>
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/play"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/Widget.AppTheme.PlayButton"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="@+id/video"
-        app:layout_constraintEnd_toEndOf="@+id/video"
-        app:layout_constraintStart_toStartOf="@+id/video"
-        app:layout_constraintTop_toTopOf="@+id/video" />
-
-    <TextView
-        android:id="@+id/content"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:autoLink="web"
-        android:lineSpacingExtra="8dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/barrier"
-        tools:text="@string/text" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/menu"
-        style="@style/Widget.AppTheme.MenuButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:importantForAccessibility="no"
-        app:icon="@drawable/condition_of_menu"
-        app:layout_constraintBottom_toBottomOf="@+id/avatar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <androidx.constraintlayout.widget.Barrier
-        android:id="@+id/barrier2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:barrierDirection="bottom"
-        app:barrierMargin="16dp"
-        app:constraint_referenced_ids="content" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/likes"
-        style="@style/Widget.AppTheme.LikeButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checkable="true"
-        app:icon="@drawable/condition_of_like"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/video" />
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
 
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/repost"
-        style="@style/Widget.AppTheme.ShareButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checkable="true"
-        app:icon="@drawable/condition_of_share"
-        app:layout_constraintBottom_toBottomOf="@+id/likes"
-        app:layout_constraintStart_toEndOf="@+id/likes"
-        app:layout_constraintTop_toTopOf="@+id/likes" />
+        </activity>
 
-
-    <TextView
-        android:id="@+id/tvViews"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/repost"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/repost"
-        tools:text="0" />
-
-     </androidx.constraintlayout.widget.ConstraintLayout>
 
     
