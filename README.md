@@ -279,9 +279,9 @@ object StringArg : ReadWriteProperty<Bundle, String?> {//переместить 
 
                                 R.id.edit -> {
                                     viewModel.edit(post)
-                                    findNavController().navigateUp()
+                                  //  findNavController().navigateUp()
                                     findNavController().navigate(
-                                        R.id.editPostFragment,
+                                        R.id.action_blankFragment_to_newPostFragment,
                                         Bundle().apply {
                                             textArg = content.text.toString()
                                         })
