@@ -193,6 +193,7 @@ object StringArg : ReadWriteProperty<Bundle, String?> {//переместить 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+      </activity>
 
 
 <?xml version="1.0" encoding="utf-8"?>
@@ -206,11 +207,97 @@ object StringArg : ReadWriteProperty<Bundle, String?> {//переместить 
     tools:context=".BlankFragment"
     tools:showIn="@layout/card_post" />
 
+     
 
-
-
-
-        </activity>
-
-
+    class BlankFragment : Fragment() {
     
+    val service = Service()
+
+    companion object {
+        var Bundle.idArg: String? by StringArg
+
+    }
+
+    private val viewModel: PostViewModel by viewModels(
+        ownerProducer = ::requireParentFragment
+    )
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        val binding = FragmentBlankBinding.inflate(
+            inflater, container, false
+        )
+
+
+        val postId = arguments?.idArg ?: -1
+        viewModel.data.observe(viewLifecycleOwner) { posts ->
+            val post = posts.find { it.id == postId } ?: return@observe
+            with(binding) {
+                author.text = post.author
+                published.text = post.published
+                content.text = post.content
+                likes.text = service.counter(post.likes)
+                share.text = service.counter(post.repost)
+                tvViews.text = service.counter(post.views)
+                likes.isChecked = post.likedByMe
+                if (post.video?.isNotEmpty() == true) {
+                    play.visibility = View.VISIBLE
+                    video.visibility = View.VISIBLE
+                } else {
+                    play.visibility = View.GONE
+                    video.visibility = View.GONE
+                }
+
+                likes.setOnClickListener {
+
+
+                }
+                share.setOnClickListener {
+
+                }
+                play.setOnClickListener {
+
+                }
+                video.setOnClickListener {
+
+                }
+
+
+                menu.setOnClickListener {
+                    PopupMenu(it.context, it).apply {
+                        inflate(R.menu.options_post)
+                        setOnMenuItemClickListener { item ->
+                            when (item.itemId) {
+                                R.id.remove -> {
+                                    viewModel.removeById(post.id)
+                                    findNavController().navigateUp()
+                                    true
+                                }
+
+                                R.id.edit -> {
+                                    viewModel.edit(post)
+                                    findNavController().navigateUp()
+                                    findNavController().navigate(
+                                        R.id.editPostFragment,
+                                        Bundle().apply {
+                                            textArg = content.text.toString()
+                                        })
+                                    true
+                                }
+
+                                else -> false
+                            }
+                        }
+                    }.show()
+                }
+            }
+        }
+
+        return binding.root
+    }
+
+    }
+
