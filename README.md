@@ -30,6 +30,9 @@ class AppActivity2 : AppCompatActivity(R.layout.activity_app) {
 
 class FeedFragment : Fragment() {
 
+     private val viewModel: PostViewModel by viewModels(
+        ownerProducer = ::requireParentFragment
+    )
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -39,7 +42,7 @@ class FeedFragment : Fragment() {
             inflater, container, false
         )
 
-        val viewModel: PostViewModel by viewModels()
+   
 
 
         val adapter = PostsAdapter(object : OnInteractionListener {
@@ -94,7 +97,7 @@ class FeedFragment : Fragment() {
 
 
 
-object StringArg : ReadWriteProperty<Bundle, String?> {
+object StringArg : ReadWriteProperty<Bundle, String?> {//переместить в Utils
 
     override fun getValue(thisRef: Bundle, property: KProperty<*>): String? =
         thisRef.getString(property.name)
@@ -105,7 +108,7 @@ object StringArg : ReadWriteProperty<Bundle, String?> {
     }
 
     }
-
+    ///
     class NewPostFragment : Fragment() {
 
           companion object {
