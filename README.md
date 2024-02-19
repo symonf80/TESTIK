@@ -143,16 +143,12 @@ object StringArg : ReadWriteProperty<Bundle, String?> {//переместить 
         }
 
 
-        binding.bottomAppBar.setOnMenuItemClickListener { menuItem ->
+       binding.bottomAppBar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 cancel -> {
-                    val intent = Intent()
-                    if (TextUtils.isEmpty(binding.edit.text)) {
-                        activity?.setResult(Activity.RESULT_CANCELED, intent)
+                    viewModel.changeContentAndSave(binding.edit.text.toString())
 
-                    }
                     findNavController().navigateUp()
-
                 }
 
                 else -> {
