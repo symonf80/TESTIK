@@ -44,3 +44,11 @@ binding.bottomAppBar.setOnMenuItemClickListener { menuItem ->
                 }
             }
         }
+
+        ------------------------------------
+        анимация переходов в nav_main(В action фрагмента)
+            app:enterAnim="@android:anim/fade_in" 
+            app:exitAnim="@android:anim/cycle_interpolator"
+            app:popEnterAnim="@android:anim/fade_in"
+            app:popExitAnim="@android:anim/fade_out"
+        
