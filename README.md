@@ -30,3 +30,17 @@ class BlankFragment : Fragment() {
 
     }........
     -----------------------------------------------
+    //В NewPOstFragmente:
+binding.bottomAppBar.setOnMenuItemClickListener { menuItem ->
+
+            when (menuItem.itemId) {
+                cancel -> {
+
+                    findNavController().navigateUp()
+                }
+
+                else -> {
+                    findNavController().navigateUp()
+                }
+            }
+        }
