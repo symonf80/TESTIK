@@ -1,303 +1,153 @@
-
-
-class AppActivity2 : AppCompatActivity(R.layout.activity_app) {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        intent?.let {
-            if (it.action != Intent.ACTION_SEND) {
-                return@let
-            }
-            val text = it.getStringExtra(Intent.EXTRA_TEXT)
-            if (text?.isNotBlank() != true) {
-                return@let
-            }
-            intent.removeExtra(Intent.EXTRA_TEXT)
-            findNavController(R.id.nav_host_fragment).navigate(
-                R.id.action_feedFragment_to_newPostFragment,
-                Bundle().apply {
-                    textArg = text
-                }
-            )
-        }
-    }
-    }
-
-    package ru.netology.nmedia.view
-
-
-
-class FeedFragment : Fragment() {
-
-     private val viewModel: PostViewModel by viewModels(
-        ownerProducer = ::requireParentFragment
-    )
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        val binding = FragmentFeedBinding.inflate(
-            inflater, container, false
-        )
-
-   
-
-
-        val adapter = PostsAdapter(object : OnInteractionListener {
-            override fun onLike(post: Post) {
-                viewModel.likeById(post.id)
-            }
-
-            override fun onShare(post: Post) {
-                viewModel.repost(post.id)
-            }
-
-            override fun onRemove(post: Post) {
-                viewModel.removeById(post.id)
-            }
-
-            override fun onEdit(post: Post) {
-                viewModel.edit(post)
-                findNavController().navigate(
-                    R.id.action_feedFragment_to_newPostFragment,
-                    Bundle().apply { textArg = post.content })
-            }
-
-            override fun onPlay(post: Post) {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(post.video))
-                val viewIntent = Intent.createChooser(intent, R.string.external_link.toString())
-                startActivity(viewIntent)
-            }
-
-
-        })
-        binding.list.adapter = adapter
-        viewModel.data.observe(viewLifecycleOwner) { posts ->
-            val newPost = adapter.currentList.size < posts.size && adapter.currentList.size > 0
-            adapter.submitList(posts) {
-                if (newPost) {
-                    binding.list.smoothScrollToPosition(0)
-                }
-            }
-        }
-
-        viewModel.edited.observe(viewLifecycleOwner) { post ->
-            if (post.id != 0L) {
-              
-            }
-        }
-        binding.add.setOnClickListener {
-           findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
-
-        }
-
-        return binding.root
-    }
-    }
-
-
-
-object StringArg : ReadWriteProperty<Bundle, String?> {//переместить в Utils
-
-    override fun getValue(thisRef: Bundle, property: KProperty<*>): String? =
-        thisRef.getString(property.name)
-
-
-    override fun setValue(thisRef: Bundle, property: KProperty<*>, value: String?) {
-        thisRef.putString(property.name, value)
-    }
-
-    }
-    ///
-    class NewPostFragment : Fragment() {
-
-          companion object {
-          var Bundle.textArg: String? by StringArg
-
-    }
-
-    private val viewModel: PostViewModel by viewModels(
-        ownerProducer = ::requireParentFragment
-    )
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        val binding = FragmentNewPostBinding.inflate(
-            inflater,
-            container,
-            false
-        )
-
-        arguments?.textArg?.let(binding.edit::setText)
-
-
-        binding.ok.setOnClickListener {
-            viewModel.changeContentAndSave(binding.edit.text.toString())
-            AndroidUtils.hideKeyboard(requireView())
-            findNavController().navigateUp()
-        }
-
-
-       binding.bottomAppBar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                cancel -> {
-                    viewModel.changeContentAndSave(binding.edit.text.toString())
-
-                    findNavController().navigateUp()
-                }
-
-                else -> {
-                    findNavController().navigateUp()
-                }
-            }
-        }
-        return binding.root
-
-    }
-
-
-    }
-
-
 <?xml version="1.0" encoding="utf-8"?>
 
-    <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nav_host_fragment"
-    android:name="androidx.navigation.fragment.NavHostFragment"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:defaultNavHost="true"
-    app:navGraph="@navigation/nav_main"
-    tools:context=".view.AppActivity2" />
-----------------------------------------------------------------------
-     <activity
-            android:name=".view.AppActivity2"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize">
-            <nav-graph android:value="@navigation/nav_main" />
+    android:layout_height="wrap_content"
+    android:padding="@dimen/size16dp">
 
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+    <ImageView
+        android:id="@+id/avatar"
+        android:layout_width="@dimen/size48dp"
+        android:layout_height="@dimen/size48dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_launcher_foreground" />
 
-      </activity>
+    <TextView
+        android:id="@+id/author"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/size16dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        app:layout_constraintBottom_toTopOf="@+id/published"
+        app:layout_constraintEnd_toStartOf="@+id/menu"
+        app:layout_constraintStart_toEndOf="@+id/avatar"
+        app:layout_constraintTop_toTopOf="@+id/avatar"
+        tools:text="@sample/posts.json/data/author" />
+
+    <TextView
+        android:id="@+id/published"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/size16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/avatar"
+        app:layout_constraintStart_toEndOf="@+id/avatar"
+        app:layout_constraintTop_toBottomOf="@+id/author"
+        tools:text="@sample/posts.json/data/published" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:barrierMargin="@dimen/size16dp"
+        app:constraint_referenced_ids="avatar,published" />
 
 
-<?xml version="1.0" encoding="utf-8"?>
+    <TextView
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/size16dp"
+        android:autoLink="web|all"
+        android:lineSpacingExtra="8dp"
+        app:layout_constraintTop_toBottomOf="@id/barrier"
+        tools:text="@sample/posts.json/data/content" />
 
-    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/menu"
+        style="@style/Widget.AppTheme.MenuButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:importantForAccessibility="no"
+        app:icon="@drawable/condition_of_menu"
+        app:layout_constraintBottom_toBottomOf="@+id/avatar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/avatar" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:barrierMargin="@dimen/size16dp"
+        app:constraint_referenced_ids="content" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/likes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Widget.AppTheme.LikeButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/barrier2"
+        android:checkable="true"
+        app:icon="@drawable/condition_of_like" />
+
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/share"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/size16dp"
+        style="@style/Widget.AppTheme.ShareButton"
+        android:checkable="true"
+        app:layout_constraintStart_toEndOf="@+id/likes"
+        app:layout_constraintTop_toBottomOf="@id/barrier2"
+        app:icon="@drawable/condition_of_share" />
+
+    <ImageView
+        android:id="@+id/views"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/share"
+        app:layout_constraintEnd_toStartOf="@+id/tvViews"
+        app:layout_constraintTop_toTopOf="@+id/share"
+        app:srcCompat="@drawable/views" />
+
+    <TextView
+        android:id="@+id/tvViews"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/views"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/views"
+        tools:text="555" />
+
+     </androidx.constraintlayout.widget.ConstraintLayout>
+
+     ----------------------------------------------------------------
+
+     <?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nav_fragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".BlankFragment"
-    tools:showIn="@layout/card_post" />
+    tools:context=".view.FeedFragment">
 
-     
-
-    class BlankFragment : Fragment() {
-    
-    val service = Service()
-
-    companion object {
-        var Bundle.idArg: String? by StringArg
-
-    }
-
-    private val viewModel: PostViewModel by viewModels(
-        ownerProducer = ::requireParentFragment
-    )
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        val binding = FragmentBlankBinding.inflate(
-            inflater, container, false
-        )
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:listitem="@layout/card_post" />
 
 
-        val postId = arguments?.idArg ?: -1
-        viewModel.data.observe(viewLifecycleOwner) { posts ->
-            val post = posts.find { it.id == postId } ?: return@observe
-            with(binding) {
-                author.text = post.author
-                published.text = post.published
-                content.text = post.content
-                likes.text = service.counter(post.likes)
-                share.text = service.counter(post.repost)
-                tvViews.text = service.counter(post.views)
-                likes.isChecked = post.likedByMe
-                if (post.video?.isNotEmpty() == true) {
-                    play.visibility = View.VISIBLE
-                    video.visibility = View.VISIBLE
-                } else {
-                    play.visibility = View.GONE
-                    video.visibility = View.GONE
-                }
-
-                likes.setOnClickListener {
-
-
-                }
-                share.setOnClickListener {
-
-                }
-                play.setOnClickListener {
-
-                }
-                video.setOnClickListener {
-
-                }
-
-
-                menu.setOnClickListener {
-                    PopupMenu(it.context, it).apply {
-                        inflate(R.menu.options_post)
-                        setOnMenuItemClickListener { item ->
-                            when (item.itemId) {
-                                R.id.remove -> {
-                                    viewModel.removeById(post.id)
-                                    findNavController().navigateUp()
-                                    true
-                                }
-
-                                R.id.edit -> {
-                                    viewModel.edit(post)
-                                  //  findNavController().navigateUp()
-                                    findNavController().navigate(
-                                        R.id.action_blankFragment_to_newPostFragment,
-                                        Bundle().apply {
-                                            textArg = content.text.toString()
-                                        })
-                                    true
-                                }
-
-                                else -> false
-                            }
-                        }
-                    }.show()
-                }
-            }
-        }
-
-        return binding.root
-    }
-
-    }
-
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/add"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:importantForAccessibility="no"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/baseline_add_24" />
+     </androidx.constraintlayout.widget.ConstraintLayout>
