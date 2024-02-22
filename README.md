@@ -271,3 +271,70 @@ class AppDb private constructor(db: SQLiteDatabase) {
     fun removeById(id:Long)
     fun repost(id: Long)
     }
+----------------------------------------------
+с сохранением черновика:
+
+     var draft: String? = null
+
+    class NewPostFragment : Fragment() {
+    companion object {
+        var Bundle.textArg: String? by StringArg
+
+    }
+
+
+    private val viewModel: PostViewModel by viewModels(
+        ownerProducer = ::requireParentFragment
+    )
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+
+        val binding = FragmentNewPostBinding.inflate(
+            inflater,
+            container,
+            false
+        )
+        val callback = requireActivity().onBackPressedDispatcher.addCallback(this) {
+
+            draft = binding.edit.text.toString()
+            Log.e("", draft!!)
+            findNavController().navigateUp()
+        }
+        if (arguments?.textArg.equals("")) {
+            binding.edit.setText(draft)
+
+        } else {
+            arguments?.textArg?.let(binding.edit::setText)
+        }
+
+        binding.ok.setOnClickListener {
+            viewModel.changeContentAndSave(binding.edit.text.toString())
+            draft = ""
+            AndroidUtils.hideKeyboard(requireView())
+            findNavController().navigateUp()
+        }
+
+
+        binding.bottomAppBar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                cancel -> {
+                    draft = ""
+                    findNavController().navigateUp()
+                }
+
+                else -> {
+                    findNavController().navigateUp()
+                }
+            }
+        }
+        return binding.root
+
+    }
+
+
+    }
+
