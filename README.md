@@ -1,33 +1,5 @@
----Сервер----
+## Ответ на вопрос «По какой причине не завершается работа функции main?»
 
-    import com.google.firebase.FirebaseApp
-    import com.google.firebase.FirebaseOptions
-    import com.google.firebase.messaging.FirebaseMessaging
-    import com.google.firebase.messaging.Message
-    import java.io.FileInputStream
-
-
-
-    fun main() {
-    val options = FirebaseOptions.builder()
-        .setCredentials(GoogleCredentials.fromStream(FileInputStream("fcm.json")))
-        .setDatabaseUrl(dbUrl)
-        .build()
-
-    FirebaseApp.initializeApp(options)
-
-    val message = Message.builder()
-        .putData("action", "LIKE")
-        .putData(
-            "content", """{
-            "userId": 1,
-            "userName": "Vasiliy",
-            "postId": 2,
-            "postAuthor": "Netology"
-        }""".trimIndent()
-        ).setToken(token)
-        .build()
-
-    FirebaseMessaging.getInstance().send(message)
-
-    }
+Если я всё верно понял происходит взаимная блокировка потоками друг друга,так как первый поток использует аргумент resourceA и далее ждет resourceB,
+а в это время второй поток использует resourceB и ждет освобождения resourceA который в свою очередь блокирован первым потоком.И получается оба потока ждут освобождения 
+аргументов которые в это время блокированы другим потоком.Патовая ситуация.
