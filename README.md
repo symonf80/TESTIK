@@ -45,7 +45,7 @@ package ru.netology.nmedia.dto
             val url = "http://10.0.2.2:9999/avatars/${post.authorAvatar}"
             Glide.with(avatar)
                 .load(url)
-                .apply(RequestOptions.circleCropTransform())
+                 .circleCrop()
                 .placeholder(R.drawable.baseline_downloading_24)
                 .error(R.drawable.baseline_error_24)
                 .timeout(10_000)
