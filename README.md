@@ -38,7 +38,7 @@ Main:
     
                             }
                             }.awaitAll()
-                    println(posts)
+                    println(posts.joinToString("\n "))
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
