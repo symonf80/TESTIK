@@ -1,139 +1,216 @@
-Main: 
-
-        import com.google.gson.Gson
-        import com.google.gson.reflect.TypeToken
         import kotlinx.coroutines.*
-        import okhttp3.*
-        import okhttp3.logging.HttpLoggingInterceptor
-        import org.example.dto.*
-        import java.io.IOException
-        import java.util.concurrent.TimeUnit
         import kotlin.coroutines.EmptyCoroutineContext
-        import kotlin.coroutines.resume
-        import kotlin.coroutines.resumeWithException
-        import kotlin.coroutines.suspendCoroutine
-    
-    private val gson = Gson()
-    private const val BASE_URL = "http://127.0.0.1:9999"
-    private val client = OkHttpClient.Builder()
-        .addInterceptor(HttpLoggingInterceptor(::println).apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        })
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .build()
-    
-    fun main() {
-        with(CoroutineScope(EmptyCoroutineContext)) {
-            launch {
-                try {
-                    val posts = getPosts(client)
-                        .map { post ->
-                            async {
-                                val postAuthor = PostWithAuthor(post, getAuthor(client, post.authorId))
-                                val comments = getComments(client, post.id)
-                                val authorComments = comments.map { comment ->
-                                    CommentsWithAuthors(getAuthor(client, comment.authorId), comment)
-                                }
-                                PostWithAuthorAndComment(postAuthor, authorComments)
-    
-                            }
-                            }.awaitAll()
-                    println(posts.joinToString("\n "))
-                } catch (e: Exception) {
-                    e.printStackTrace()
+        
+        
+        // 1)
+        fun main() = runBlocking {
+            val job = CoroutineScope(EmptyCoroutineContext).launch {
+                launch {
+                    delay(500)
+                    println("ok") // <-- НЕ ОТРАБОТАЕТ
+                }
+                launch {
+                    delay(500)
+                    println("ok")
                 }
             }
+            delay(100)
+            job.cancelAndJoin()
         }
-        Thread.sleep(30_000L)
-    }
-    
-    suspend fun OkHttpClient.apiCall(url: String): Response {
-        return suspendCoroutine { continuation ->
-            Request.Builder()
-                .url(url)
-                .build()
-                .let(::newCall)
-                .enqueue(object : Callback {
-                    override fun onResponse(call: Call, response: Response) {
-                        continuation.resume(response)
-                    }
-    
-                    override fun onFailure(call: Call, e: IOException) {
-                        continuation.resumeWithException(e)
-                    }
-                })
-        }
-    }
-    
-    suspend fun <T> makeRequest(url: String, client: OkHttpClient, typeToken: TypeToken<T>): T =
-        withContext(Dispatchers.IO) {
-            client.apiCall(url)
-                .let { response ->
-                    if (!response.isSuccessful) {
-                        response.close()
-                        throw RuntimeException(response.message)
-                    }
-                    val body = response.body ?: throw RuntimeException("response body is null")
-                    gson.fromJson(body.string(), typeToken.type)
-                }
-        }
-    
-    suspend fun getPosts(client: OkHttpClient): List<Post> =
-        makeRequest("$BASE_URL/api/slow/posts", client, object : TypeToken<List<Post>>() {})
-    
-    suspend fun getComments(client: OkHttpClient, id: Long): List<Comment> =
-        makeRequest("$BASE_URL/api/slow/posts/$id/comments", client, object : TypeToken<List<Comment>>() {})
-    
-    suspend fun getAuthor(client: OkHttpClient, id: Long): Author =
-        makeRequest("$BASE_URL/api/slow/authors/$id", client, object : TypeToken<Author>() {})
-
-dto:
-
-    data class Attachment(
-        val url: String,
-        val description: String,
-        val type: AttachmentType,
-    )
-    
-    enum class AttachmentType
-
-    data class Author (
-    val id: Long,
-    val name: String,
-    val avatar: String,
-    )
-
-    data class Comment(
-    val id: Long,
-    val postId: Long,
-    val authorId: Long,
-    val content: String,
-    val published: Long,
-    val likedByMe: Boolean,
-    val likes: Int = 0,
-    )
-
-       data class CommentsWithAuthors(
-        val author: Author,
-        val comment: Comment
-    ) 
-
-    data class Post(
-    val id: Long,
-    val authorId: Long,
-    val content: String,
-    val published: Long,
-    val likedByMe: Boolean,
-    val likes: Int = 0,
-    var attachment: Attachment? = null,
-    )
-
-    data class PostWithAuthor(
-    val post: Post,
-    val author: Author,
-    )
-
-    data class PostWithAuthorAndComment (
-    val postAuthor: PostWithAuthor,
-    val commentsAuthor: List<CommentsWithAuthors>
-    )
+        /* Создаются две дочерние корутины внутри родительской. Обе эти корутины выполняют задержку в 500 м.сек. и выводят OK.
+        Они так же запускаются одновременно, и вывод OK будет происходить параллельно. После создания этих корутин,
+        вызывается delay(100) и означает, что основная корутина будет ждать 100 м.сек. После вызова job.cancelAndJoin,
+        Job будет отменен, и все корутины, запущенные внутри Job, тоже будут отменены. Значит и строка, помеченная в коде
+        символом //<-- не отработает, так как не успеет выполниться. */
+        
+        
+        // 2)
+        //fun main() = runBlocking {
+        //    val job = CoroutineScope(EmptyCoroutineContext).launch {
+        //        val child = launch {
+        //            delay(500)
+        //            println("ok") // <-- НЕ ОТРАБОТАЕТ
+        //        }
+        //        launch {
+        //            delay(500)
+        //            println("ok")
+        //        }
+        //        delay(100)
+        //        child.cancel()
+        //    }
+        //    delay(100)
+        //    job.join()
+        //}
+        /* Создаются две дочерние корутины внутри родительской. Первая корутина child имеет задержку в 500 м.сек. и выводит OK.
+        Вторая корутина также выполняет задержку в 500 м.сек. и выводит OK, но она не имеет отношения к child.
+        После этих корутин вызывается delay(100), что означает, что родительская корутина будет ожидать 100 м.сек., перед тем,
+        как вызовется child.cancel. После вызова child.cancel(), корутина child будет отменена, так как вызов cancel()
+        применяется только к этой корутине. Таким образом, код в строке с пометкой //<-- не отработает, так как корутина child
+        будет отменена до завершения задержки и вывода OK. */
+        
+        
+        // 3)
+        //fun main() {
+        //    with(CoroutineScope(EmptyCoroutineContext)) {
+        //        try {
+        //            launch {
+        //                throw Exception("something bad happened")
+        //            }
+        //        } catch (e: Exception) {
+        //            e.printStackTrace() // <-- НЕ ОТРАБОТАЕТ
+        //        }
+        //    }
+        //    Thread.sleep(1000)
+        //}
+        /* Создаётся корутина в блоке launch, и в этой корутине выбрасывается исключение "something bad happened".
+        Это исключение выбрасывается внутри этой корутины, а блок catch находится вне этой корутины. Получается, что исключение
+        будет обработано внутри корутины, исключение будет привязано к этой корутине, но код в блоке catch не выполнится,
+        так как корутина будет завершена из-за выбрасывания исключения. Таким образом строка в коде с пометкой //<--
+        не отработает, так как исключение будет поймано внутри корутины, а не вне её. */
+        
+        
+        // 4)
+        //fun main() {
+        //    CoroutineScope(EmptyCoroutineContext).launch {
+        //        try {
+        //            coroutineScope {
+        //                throw Exception("something bad happened")
+        //            }
+        //        } catch (e: Exception) {
+        //            e.printStackTrace() // <-- ОТРАБОТАЕТ
+        //        }
+        //    }
+        //    Thread.sleep(1000)
+        //}
+        /* Создаётся корутина в блоке launch, и в этой корутине вызывается coroutineScope, который позволяет создать Scope
+        для перехвата ошибок во вложенных корутинах. Внутри coroutineScope выбрасывается исключение "something bad happened".
+        В блоке catch исключение будет успешно поймано. После того как исключение поймано строка e.printStackTrace будет вызвана
+        и выведет стек вызовов и информацию об исключении. После выполнения корутины, выполнится Thread.sleep(1000),
+        что даст корутине достаточно времени для выполнения. Код в строчке с пометкой //<-- отработает. */
+        
+        
+        // 5)
+        //fun main() {
+        //    CoroutineScope(EmptyCoroutineContext).launch {
+        //        try {
+        //            supervisorScope {
+        //                throw Exception("something bad happened")
+        //            }
+        //        } catch (e: Exception) {
+        //            e.printStackTrace() // <-- ОТРАБОТАЕТ
+        //        }
+        //    }
+        //    Thread.sleep(1000)
+        //}
+        /* Создаётся корутина в блоке launch. Внутри этой корутины вызывается supervisorScope, который также создает новую
+        корутину (supervisor), что означает если внутри этой корутины произойдет исключение, то оно не приведет к отмене
+        родительской корутины. Внутри supervisorScope бросается исключение "something bad happened". Затем это исключение
+        перехватывается с помощью catch и выводится с помощью e.printStackTrace. После этого вызывается Thread.sleep(1000),
+        что приостанавливает основной поток на 1 секунду, так как без этой задержки программа может завершиться до
+        завершения выполнения корутины. Значит код в строчке с пометкой //<-- отработает. */
+        
+        
+        // 6)
+        //fun main() {
+        //    CoroutineScope(EmptyCoroutineContext).launch {
+        //        try {
+        //            coroutineScope {
+        //                launch {
+        //                    delay(500)
+        //                    throw Exception("something bad happened") // <-- НЕ ОТРАБОТАЕТ
+        //                }
+        //                launch {
+        //                    throw Exception("something bad happened")
+        //                }
+        //            }
+        //        } catch (e: Exception) {
+        //            e.printStackTrace()
+        //        }
+        //    }
+        //    Thread.sleep(1000)
+        //}
+        /* Создаётся корутина с помощью launch, и внутри этой корутины вызывается coroutineScope. Внутри coroutineScope
+        создаётся две корутины. Первая корутина выполняет задержку в 500 м.сек. и затем бросает исключение
+        "something bad happened". Вторая корутина сразу бросает исключение "something bad happened" и это исключение будет
+        перехвачено блоком catch, который находится внутри внешней корутины. Первая корутина с задержкой выбрасывает исключение
+        после своего запуска. Это исключение будет выброшено внутри этой корутины и не будет обработано нигде в данном коде.
+        Таким образом, код в строке с пометкой //<-- не отработает. */
+        
+        // 7)
+        //fun main() {
+        //    CoroutineScope(EmptyCoroutineContext).launch {
+        //        try {
+        //            supervisorScope {
+        //                launch {
+        //                    delay(500)
+        //                    throw Exception("something bad happened") // <-- ОТРАБОТАЕТ
+        //                }
+        //                launch {
+        //                    throw Exception("something bad happened")
+        //                }
+        //            }
+        //        } catch (e: Exception) {
+        //            e.printStackTrace() // <-- ОТРАБОТАЕТ
+        //        }
+        //    }
+        //    Thread.sleep(1000)
+        //}
+        /* Создаётся корутина в блоке launch. Внутри этой корутины вызывается supervisorScope. В supervisorScope имеются две
+        корутины. Первая корутина выполняет задержку в 500 м.сек. и затем бросает исключение "something bad happened".
+        Так как у первой корутины есть delay с задержкой, то она приостанавливается во время работы supervisorScope. После
+        истечения задержки, исключение бросается и успешно попадает в блок catch внутри родительской корутины. Получается,
+        что код в строчках с пометками //<-- отработает. */
+        
+        
+        // 8)
+        //fun main() {
+        //    CoroutineScope(EmptyCoroutineContext).launch {
+        //        CoroutineScope(EmptyCoroutineContext).launch {
+        //            launch {
+        //                delay(1000)
+        //                println("ok") // <-- НЕ ОТРАБОТАЕТ
+        //            }
+        //            launch {
+        //                delay(500)
+        //                println("ok")
+        //            }
+        //            throw Exception("something bad happened")
+        //        }
+        //    }
+        //    Thread.sleep(1000)
+        //}
+        /* Создаётся корутина внутри CoroutineScope. Внутри этой корутины есть еще одна дополнительная корутина, в которой
+        создаются две дочерние корутины с задержкой 1 сек. и 500 м.сек. После задержки первой дочерней корутины следует строка
+        throw Exception(). Исключение выбрасывается внутри первой дополнительной корутины. Но, поскольку выполнение дочерней
+        корутины было приостановлено на 1 секунду, исключение не выбрасывается сразу, а только после этой задержки. Весь код в
+        блоках launch выполняется асинхронно и основной поток не ожидает его завершения. Поэтому, после запуска корутин и
+        ожидания 1 секунды с помощью Thread.sleep(1000), программа завершается, не дожидаясь выполнения всех корутин.
+        Таким образом, код в строке с пометкой //<-- не отработает. */
+        
+        // 9)
+        //fun main() {
+        //    CoroutineScope(EmptyCoroutineContext).launch {
+        //        CoroutineScope(EmptyCoroutineContext + SupervisorJob()).launch {
+        //            launch {
+        //                delay(1000)
+        //                println("ok") // <-- НЕ ОТРАБОТАЕТ
+        //            }
+        //            launch {
+        //                delay(500)
+        //                println("ok")
+        //            }
+        //            throw Exception("something bad happened")
+        //        }
+        //    }
+        //    Thread.sleep(1000)
+        //}
+        /* Создаётся корутина внутри CoroutineScope. Внутри этой корутины создается еще одна дополнительная корутина
+        с добавлением SupervisorJob - который означает, что если одна из дочерних корутин выбрасывает исключение, это не влияет
+        на выполнение других дочерних корутин. Однако, в данном случае, мы создаем дочернюю корутину без SupervisorJob, поэтому
+        она все равно влияет на выполнение всех дочерних корутин. Внутри дополнительной корутины создаются две дочерние:
+        одна с задержкой 1 сек., другая с задержкой 500 м.сек. После создания этих корутин следует строка throw Exception().
+        Исключение выбрасывается внутри дополнительной корутины, и так как эта корутина не имеет своего SupervisorJob,
+        оно влияет на выполнение всех корутин, созданных внутри CoroutineScope с SupervisorJob. Исключение влияет на обе
+        дочерние корутины: первая корутина, которая должна была выполнить println("ok"), и вторая. Программа завершается с
+        исключением, и строка println("ok") не будет выполнена. Значит код в строчке с пометкой //<-- не отработает.
+        */
