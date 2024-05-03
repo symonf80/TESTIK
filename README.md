@@ -1,216 +1,202 @@
-        import kotlinx.coroutines.*
-        import kotlin.coroutines.EmptyCoroutineContext
+package ru.netology.nmedia.viewmodel
+
+        import android.app.Application
+        import android.widget.Toast
+        import androidx.lifecycle.*
+        import kotlinx.coroutines.launch
+        import ru.netology.nmedia.R
+        import ru.netology.nmedia.db.AppDb
+        import ru.netology.nmedia.dto.Post
+        import ru.netology.nmedia.model.FeedModel
+        import ru.netology.nmedia.model.FeedModelState
+        import ru.netology.nmedia.repository.PostRepository
+        import ru.netology.nmedia.repository.PostRepositoryImpl
+        import ru.netology.nmedia.util.SingleLiveEvent
         
-        
-        // 1)
-        fun main() = runBlocking {
-            val job = CoroutineScope(EmptyCoroutineContext).launch {
-                launch {
-                    delay(500)
-                    println("ok") // <-- НЕ ОТРАБОТАЕТ
-                }
-                launch {
-                    delay(500)
-                    println("ok")
+        private val empty = Post(
+            id = 0,
+            content = "",
+            author = "",
+            authorAvatar = "",
+            likedByMe = false,
+            likes = 0,
+            published = ""
+        )
+
+        class PostViewModel(application: Application) : AndroidViewModel(application) {
+            // упрощённый вариант
+            private val repository: PostRepository =
+                PostRepositoryImpl(AppDb.getInstance(context = application).postDao())
+
+    val data: LiveData<FeedModel> = repository.data.map(::FeedModel)
+    private val _dataState = MutableLiveData<FeedModelState>()
+    val dataState: LiveData<FeedModelState>
+        get() = _dataState
+
+    private val edited = MutableLiveData(empty)
+    private val _postCreated = SingleLiveEvent<Unit>()
+    val postCreated: LiveData<Unit>
+        get() = _postCreated
+
+    init {
+        loadPosts()
+    }
+
+    fun loadPosts() = viewModelScope.launch {
+        try {
+            _dataState.value = FeedModelState(loading = true)
+            repository.getAll()
+            _dataState.value = FeedModelState()
+        } catch (e: Exception) {
+            _dataState.value = FeedModelState(error = true)
+        }
+    }
+
+    fun refreshPosts() = viewModelScope.launch {
+        try {
+            _dataState.value = FeedModelState(refreshing = true)
+            repository.getAll()
+            _dataState.value = FeedModelState()
+        } catch (e: Exception) {
+            _dataState.value = FeedModelState(error = true)
+        }
+    }
+
+    fun save() {
+        edited.value?.let {
+            _postCreated.value = Unit
+            viewModelScope.launch {
+                try {
+                    repository.save(it)
+                    _dataState.value = FeedModelState()
+                } catch (e: Exception) {
+                    _dataState.value = FeedModelState(error = true)
                 }
             }
-            delay(100)
-            job.cancelAndJoin()
         }
-        /* Создаются две дочерние корутины внутри родительской. Обе эти корутины выполняют задержку в 500 м.сек. и выводят OK.
-        Они так же запускаются одновременно, и вывод OK будет происходить параллельно. После создания этих корутин,
-        вызывается delay(100) и означает, что основная корутина будет ждать 100 м.сек. После вызова job.cancelAndJoin,
-        Job будет отменен, и все корутины, запущенные внутри Job, тоже будут отменены. Значит и строка, помеченная в коде
-        символом //<-- не отработает, так как не успеет выполниться. */
+        edited.value = empty
+    }
+
+    fun edit(post: Post) {
+        edited.value = post
+    }
+
+    fun changeContent(content: String) {
+        val text = content.trim()
+        if (edited.value?.content == text) {
+            return
+        }
+        edited.value = edited.value?.copy(content = text)
+    }
+
+    fun likeById(id: Long) {
+        viewModelScope.launch {
+            try {
+                repository.likeById(id)
+                _dataState.value = FeedModelState()
+            } catch (e: Exception) {
+                _dataState.value = FeedModelState(error = true)
+            }
+        }
+    }
+
+    fun removeById(id: Long) {
+        viewModelScope.launch {
+            try {
+                repository.removeById(id)
+                _dataState.value = FeedModelState()
+            } catch (e: Exception) {
+                _dataState.value = FeedModelState(error = true)
+            }
+        }
+    }
+        }
+
+package ru.netology.nmedia.repository
+
+        import androidx.lifecycle.*
+        import okio.IOException
+        import ru.netology.nmedia.api.*
+        import ru.netology.nmedia.dao.PostDao
+        import ru.netology.nmedia.dto.Post
+        import ru.netology.nmedia.entity.PostEntity
+        import ru.netology.nmedia.entity.toDto
+        import ru.netology.nmedia.entity.toEntity
+        import ru.netology.nmedia.error.ApiError
+        import ru.netology.nmedia.error.NetworkError
+        import ru.netology.nmedia.error.UnknownError
         
-        
-        // 2)
-        //fun main() = runBlocking {
-        //    val job = CoroutineScope(EmptyCoroutineContext).launch {
-        //        val child = launch {
-        //            delay(500)
-        //            println("ok") // <-- НЕ ОТРАБОТАЕТ
-        //        }
-        //        launch {
-        //            delay(500)
-        //            println("ok")
-        //        }
-        //        delay(100)
-        //        child.cancel()
-        //    }
-        //    delay(100)
-        //    job.join()
-        //}
-        /* Создаются две дочерние корутины внутри родительской. Первая корутина child имеет задержку в 500 м.сек. и выводит OK.
-        Вторая корутина также выполняет задержку в 500 м.сек. и выводит OK, но она не имеет отношения к child.
-        После этих корутин вызывается delay(100), что означает, что родительская корутина будет ожидать 100 м.сек., перед тем,
-        как вызовется child.cancel. После вызова child.cancel(), корутина child будет отменена, так как вызов cancel()
-        применяется только к этой корутине. Таким образом, код в строке с пометкой //<-- не отработает, так как корутина child
-        будет отменена до завершения задержки и вывода OK. */
-        
-        
-        // 3)
-        //fun main() {
-        //    with(CoroutineScope(EmptyCoroutineContext)) {
-        //        try {
-        //            launch {
-        //                throw Exception("something bad happened")
-        //            }
-        //        } catch (e: Exception) {
-        //            e.printStackTrace() // <-- НЕ ОТРАБОТАЕТ
-        //        }
-        //    }
-        //    Thread.sleep(1000)
-        //}
-        /* Создаётся корутина в блоке launch, и в этой корутине выбрасывается исключение "something bad happened".
-        Это исключение выбрасывается внутри этой корутины, а блок catch находится вне этой корутины. Получается, что исключение
-        будет обработано внутри корутины, исключение будет привязано к этой корутине, но код в блоке catch не выполнится,
-        так как корутина будет завершена из-за выбрасывания исключения. Таким образом строка в коде с пометкой //<--
-        не отработает, так как исключение будет поймано внутри корутины, а не вне её. */
-        
-        
-        // 4)
-        //fun main() {
-        //    CoroutineScope(EmptyCoroutineContext).launch {
-        //        try {
-        //            coroutineScope {
-        //                throw Exception("something bad happened")
-        //            }
-        //        } catch (e: Exception) {
-        //            e.printStackTrace() // <-- ОТРАБОТАЕТ
-        //        }
-        //    }
-        //    Thread.sleep(1000)
-        //}
-        /* Создаётся корутина в блоке launch, и в этой корутине вызывается coroutineScope, который позволяет создать Scope
-        для перехвата ошибок во вложенных корутинах. Внутри coroutineScope выбрасывается исключение "something bad happened".
-        В блоке catch исключение будет успешно поймано. После того как исключение поймано строка e.printStackTrace будет вызвана
-        и выведет стек вызовов и информацию об исключении. После выполнения корутины, выполнится Thread.sleep(1000),
-        что даст корутине достаточно времени для выполнения. Код в строчке с пометкой //<-- отработает. */
-        
-        
-        // 5)
-        //fun main() {
-        //    CoroutineScope(EmptyCoroutineContext).launch {
-        //        try {
-        //            supervisorScope {
-        //                throw Exception("something bad happened")
-        //            }
-        //        } catch (e: Exception) {
-        //            e.printStackTrace() // <-- ОТРАБОТАЕТ
-        //        }
-        //    }
-        //    Thread.sleep(1000)
-        //}
-        /* Создаётся корутина в блоке launch. Внутри этой корутины вызывается supervisorScope, который также создает новую
-        корутину (supervisor), что означает если внутри этой корутины произойдет исключение, то оно не приведет к отмене
-        родительской корутины. Внутри supervisorScope бросается исключение "something bad happened". Затем это исключение
-        перехватывается с помощью catch и выводится с помощью e.printStackTrace. После этого вызывается Thread.sleep(1000),
-        что приостанавливает основной поток на 1 секунду, так как без этой задержки программа может завершиться до
-        завершения выполнения корутины. Значит код в строчке с пометкой //<-- отработает. */
-        
-        
-        // 6)
-        //fun main() {
-        //    CoroutineScope(EmptyCoroutineContext).launch {
-        //        try {
-        //            coroutineScope {
-        //                launch {
-        //                    delay(500)
-        //                    throw Exception("something bad happened") // <-- НЕ ОТРАБОТАЕТ
-        //                }
-        //                launch {
-        //                    throw Exception("something bad happened")
-        //                }
-        //            }
-        //        } catch (e: Exception) {
-        //            e.printStackTrace()
-        //        }
-        //    }
-        //    Thread.sleep(1000)
-        //}
-        /* Создаётся корутина с помощью launch, и внутри этой корутины вызывается coroutineScope. Внутри coroutineScope
-        создаётся две корутины. Первая корутина выполняет задержку в 500 м.сек. и затем бросает исключение
-        "something bad happened". Вторая корутина сразу бросает исключение "something bad happened" и это исключение будет
-        перехвачено блоком catch, который находится внутри внешней корутины. Первая корутина с задержкой выбрасывает исключение
-        после своего запуска. Это исключение будет выброшено внутри этой корутины и не будет обработано нигде в данном коде.
-        Таким образом, код в строке с пометкой //<-- не отработает. */
-        
-        // 7)
-        //fun main() {
-        //    CoroutineScope(EmptyCoroutineContext).launch {
-        //        try {
-        //            supervisorScope {
-        //                launch {
-        //                    delay(500)
-        //                    throw Exception("something bad happened") // <-- ОТРАБОТАЕТ
-        //                }
-        //                launch {
-        //                    throw Exception("something bad happened")
-        //                }
-        //            }
-        //        } catch (e: Exception) {
-        //            e.printStackTrace() // <-- ОТРАБОТАЕТ
-        //        }
-        //    }
-        //    Thread.sleep(1000)
-        //}
-        /* Создаётся корутина в блоке launch. Внутри этой корутины вызывается supervisorScope. В supervisorScope имеются две
-        корутины. Первая корутина выполняет задержку в 500 м.сек. и затем бросает исключение "something bad happened".
-        Так как у первой корутины есть delay с задержкой, то она приостанавливается во время работы supervisorScope. После
-        истечения задержки, исключение бросается и успешно попадает в блок catch внутри родительской корутины. Получается,
-        что код в строчках с пометками //<-- отработает. */
-        
-        
-        // 8)
-        //fun main() {
-        //    CoroutineScope(EmptyCoroutineContext).launch {
-        //        CoroutineScope(EmptyCoroutineContext).launch {
-        //            launch {
-        //                delay(1000)
-        //                println("ok") // <-- НЕ ОТРАБОТАЕТ
-        //            }
-        //            launch {
-        //                delay(500)
-        //                println("ok")
-        //            }
-        //            throw Exception("something bad happened")
-        //        }
-        //    }
-        //    Thread.sleep(1000)
-        //}
-        /* Создаётся корутина внутри CoroutineScope. Внутри этой корутины есть еще одна дополнительная корутина, в которой
-        создаются две дочерние корутины с задержкой 1 сек. и 500 м.сек. После задержки первой дочерней корутины следует строка
-        throw Exception(). Исключение выбрасывается внутри первой дополнительной корутины. Но, поскольку выполнение дочерней
-        корутины было приостановлено на 1 секунду, исключение не выбрасывается сразу, а только после этой задержки. Весь код в
-        блоках launch выполняется асинхронно и основной поток не ожидает его завершения. Поэтому, после запуска корутин и
-        ожидания 1 секунды с помощью Thread.sleep(1000), программа завершается, не дожидаясь выполнения всех корутин.
-        Таким образом, код в строке с пометкой //<-- не отработает. */
-        
-        // 9)
-        //fun main() {
-        //    CoroutineScope(EmptyCoroutineContext).launch {
-        //        CoroutineScope(EmptyCoroutineContext + SupervisorJob()).launch {
-        //            launch {
-        //                delay(1000)
-        //                println("ok") // <-- НЕ ОТРАБОТАЕТ
-        //            }
-        //            launch {
-        //                delay(500)
-        //                println("ok")
-        //            }
-        //            throw Exception("something bad happened")
-        //        }
-        //    }
-        //    Thread.sleep(1000)
-        //}
-        /* Создаётся корутина внутри CoroutineScope. Внутри этой корутины создается еще одна дополнительная корутина
-        с добавлением SupervisorJob - который означает, что если одна из дочерних корутин выбрасывает исключение, это не влияет
-        на выполнение других дочерних корутин. Однако, в данном случае, мы создаем дочернюю корутину без SupervisorJob, поэтому
-        она все равно влияет на выполнение всех дочерних корутин. Внутри дополнительной корутины создаются две дочерние:
-        одна с задержкой 1 сек., другая с задержкой 500 м.сек. После создания этих корутин следует строка throw Exception().
-        Исключение выбрасывается внутри дополнительной корутины, и так как эта корутина не имеет своего SupervisorJob,
-        оно влияет на выполнение всех корутин, созданных внутри CoroutineScope с SupervisorJob. Исключение влияет на обе
-        дочерние корутины: первая корутина, которая должна была выполнить println("ok"), и вторая. Программа завершается с
-        исключением, и строка println("ok") не будет выполнена. Значит код в строчке с пометкой //<-- не отработает.
-        */
+        class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
+            override val data = dao.getAll().map(List<PostEntity>::toDto)
+
+    override suspend fun getAll() {
+        try {
+            val response = PostsApi.service.getAll()
+            if (!response.isSuccessful) {
+                throw ApiError(response.code(), response.message())
+            }
+
+            val body = response.body() ?: throw ApiError(response.code(), response.message())
+            dao.insert(body.toEntity())
+        } catch (e: IOException) {
+            throw NetworkError
+        } catch (e: Exception) {
+            throw UnknownError
+        }
+    }
+
+    override suspend fun save(post: Post) {
+        try {
+            val response = PostsApi.service.save(post)
+            if (!response.isSuccessful) {
+                throw ApiError(response.code(), response.message())
+            }
+
+            val body = response.body() ?: throw ApiError(response.code(), response.message())
+            dao.insert(PostEntity.fromDto(body))
+        } catch (e: IOException) {
+            throw NetworkError
+        } catch (e: Exception) {
+            throw UnknownError
+        }
+    }
+
+    override suspend fun removeById(id: Long) {
+        try {
+            dao.removeById(id)
+            val response = PostsApi.service.removeById(id)
+            if (!response.isSuccessful) {
+                throw ApiError(response.code(), response.message())
+            }
+        } catch (e: IOException) {
+            throw NetworkError
+        } catch (e: Exception) {
+            throw UnknownError
+        }
+    }
+
+    override suspend fun likeById(id: Long) {
+        try {
+            data.value?.find { it.id == id }?.let {
+                it.copy(
+                    likedByMe = !it.likedByMe,
+                    likes = it.likes + if (it.likedByMe) -1 else +1
+                ).apply {
+                    dao.insert(PostEntity.fromDto(this))
+                    PostsApi.service.let { api ->
+                        if (likedByMe) api.likeById(id) else api.dislikeById(id)
+                    }.apply {
+                        if (!isSuccessful) {
+                            throw ApiError(code(), message())
+                        }
+                    }
+                }
+            } ?: throw UnknownError
+        } catch (e: IOException) {
+            throw NetworkError
+        } catch (e: Exception) {
+            throw UnknownError
+        }
+    }
+        }
+
