@@ -45,6 +45,7 @@
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+     (activity as AppCompatActivity?)!!.supportActionBar!!.hide()
         val binding = FragmentOneImageBinding.inflate(
             inflater,
             container,
@@ -144,5 +145,18 @@ ____________________________________________
         return oldItem == newItem
     }
     }
+______________________________________________
+    class FeedFragment : Fragment() {
 
+    private val viewModel: PostViewModel by activityViewModels()
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        (activity as AppCompatActivity?)!!.supportActionBar!!.show()
+        val binding = FragmentFeedBinding.inflate(inflater, container, false)
+
+        val adapter = PostsAdapter(object : OnInteractionListener {.....
     
